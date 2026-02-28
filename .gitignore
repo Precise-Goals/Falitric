@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Build outputs
+dist/
+build/
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage
+coverage/
+.nyc_output/
+htmlcov/
+
+# Hardhat
+blockchain/artifacts/
+blockchain/cache/
+blockchain/ignition/deployments/
+
+# Frontend
+frontend/dist/
+
+# Python
+*.egg-info/
+dist/
+.pytest_cache/
+
+# Docker
+.dockerignore
+
+# Misc
+*.zip
+*.tar.gz
+deployments.json

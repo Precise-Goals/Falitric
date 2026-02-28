@@ -42,6 +42,18 @@ router.get("/my", authenticate, async (req, res) => {
   }
 });
 
+// GET /api/installations/admin/pending - Admin: list pending (must be before /:id)
+router.get("/admin/pending", authenticate, requireAdmin, async (req, res) => {
+  try {
+    const installations = await Installation.find({ status: "pending" })
+      .populate("owner", "email walletAddress")
+      .lean();
+    res.json({ installations });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch pending installations" });
+  }
+});
+
 // GET /api/installations/:id
 router.get("/:id", async (req, res) => {
   try {
@@ -155,18 +167,6 @@ router.patch("/:id/reject", authenticate, requireAdmin, async (req, res) => {
     res.json({ installation });
   } catch (err) {
     res.status(500).json({ error: "Failed to reject installation" });
-  }
-});
-
-// GET /api/installations/admin/pending - Admin: list pending
-router.get("/admin/pending", authenticate, requireAdmin, async (req, res) => {
-  try {
-    const installations = await Installation.find({ status: "pending" })
-      .populate("owner", "email walletAddress")
-      .lean();
-    res.json({ installations });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch pending installations" });
   }
 });
 

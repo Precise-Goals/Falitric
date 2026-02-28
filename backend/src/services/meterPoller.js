@@ -29,7 +29,7 @@ async function pollAndMint() {
     const privateKey = process.env.DEPLOYER_PRIVATE_KEY;
     const tokenAddress = process.env.ENERGY_TOKEN_ADDRESS;
 
-    if (!privateKey || !tokenAddress || tokenAddress === "0x0000000000000000000000000000000000000000") {
+    if (!privateKey || !tokenAddress || tokenAddress === ethers.ZeroAddress) {
       console.warn("MeterPoller: Blockchain config missing, skipping token minting.");
       // Still record readings without minting
       for (const installation of installations) {

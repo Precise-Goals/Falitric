@@ -27,6 +27,7 @@ contract TradeEngine is Ownable, ReentrancyGuard {
     uint256 public nextTradeId;
     mapping(uint256 => Trade) public trades;
 
+    event TradeInitiated(uint256 indexed tradeId, address indexed seller, address indexed buyer, uint256 tokenAmount);
     event TradeCreated(uint256 indexed tradeId, address indexed seller, address indexed buyer, uint256 tokenAmount, uint256 ethAmount);
     event TradeReleased(uint256 indexed tradeId);
     event TradeCancelled(uint256 indexed tradeId);
@@ -37,16 +38,16 @@ contract TradeEngine is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Seller initiates trade by locking tokens. Buyer locks ETH simultaneously.
-     * @param buyer Address of the buyer
-     * @param tokenAmount Amount of ENRG tokens to trade
+     * @dev Phase 1: Seller locks ENRG tokens to initiate a trade.
+     *      Call approve(tradeEngine, tokenAmount) on the token contract first.
+     * @param buyer  Designated buyer address
+     * @param tokenAmount  Amount of ENRG tokens to escrow
+     * @return tradeId  New trade identifier
      */
-    function lockTrade(address buyer, uint256 tokenAmount) external payable nonReentrant returns (uint256 tradeId) {
+    function lockTrade(address buyer, uint256 tokenAmount) external nonReentrant returns (uint256 tradeId) {
         require(buyer != address(0) && buyer != msg.sender, "Invalid buyer");
         require(tokenAmount > 0, "Token amount must be > 0");
-        require(msg.value > 0, "ETH amount must be > 0");
 
-        // Transfer tokens from seller to this contract
         bool transferred = energyToken.transferFrom(msg.sender, address(this), tokenAmount);
         require(transferred, "Token transfer failed");
 
@@ -55,20 +56,38 @@ contract TradeEngine is Ownable, ReentrancyGuard {
             seller: msg.sender,
             buyer: buyer,
             tokenAmount: tokenAmount,
-            ethAmount: msg.value,
+            ethAmount: 0,
             status: TradeStatus.Open
         });
 
-        emit TradeCreated(tradeId, msg.sender, buyer, tokenAmount, msg.value);
+        emit TradeInitiated(tradeId, msg.sender, buyer, tokenAmount);
+    }
+
+    /**
+     * @dev Phase 2: Buyer funds the trade by sending the agreed ETH amount.
+     *      Only the designated buyer may call this function.
+     * @param tradeId  Trade to fund
+     */
+    function fundTrade(uint256 tradeId) external payable nonReentrant {
+        Trade storage trade = trades[tradeId];
+        require(trade.status == TradeStatus.Open, "Trade not open");
+        require(msg.sender == trade.buyer, "Only buyer can fund");
+        require(msg.value > 0, "ETH amount must be > 0");
+        require(trade.ethAmount == 0, "Trade already funded");
+
+        trade.ethAmount = msg.value;
+        emit TradeCreated(tradeId, trade.seller, trade.buyer, trade.tokenAmount, msg.value);
     }
 
     /**
      * @dev Release trade: sends tokens to buyer, ETH to seller.
-     *      Only callable by owner (backend arbitrator) or seller/buyer by agreement.
+     *      Requires trade to be funded (ethAmount > 0).
+     *      Only callable by owner (backend arbitrator) or the parties.
      */
     function releaseTrade(uint256 tradeId) external nonReentrant {
         Trade storage trade = trades[tradeId];
         require(trade.status == TradeStatus.Open, "Trade not open");
+        require(trade.ethAmount > 0, "Trade not yet funded by buyer");
         require(
             msg.sender == owner() || msg.sender == trade.seller || msg.sender == trade.buyer,
             "Not authorized"
@@ -100,8 +119,11 @@ contract TradeEngine is Ownable, ReentrancyGuard {
 
         energyToken.transfer(trade.seller, trade.tokenAmount);
 
-        (bool sent, ) = trade.buyer.call{value: trade.ethAmount}("");
-        require(sent, "ETH refund failed");
+        // Only refund ETH if the buyer had funded the trade
+        if (trade.ethAmount > 0) {
+            (bool sent, ) = trade.buyer.call{value: trade.ethAmount}("");
+            require(sent, "ETH refund failed");
+        }
 
         emit TradeCancelled(tradeId);
     }

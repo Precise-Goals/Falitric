@@ -1,5 +1,6 @@
 const express = require("express");
 const { body, validationResult } = require("express-validator");
+const mongoose = require("mongoose");
 const MeterReading = require("../models/MeterReading");
 const Installation = require("../models/Installation");
 const { authenticate } = require("../middleware/auth");
@@ -92,7 +93,7 @@ router.get("/stats/:installationId", authenticate, async (req, res) => {
     }
 
     const stats = await MeterReading.aggregate([
-      { $match: { installationId: new (require("mongoose").Types.ObjectId)(installationId) } },
+      { $match: { installationId: new mongoose.Types.ObjectId(installationId) } },
       {
         $group: {
           _id: null,

@@ -84,33 +84,35 @@ export default function GridMap() {
   }
 
   function renderMarkers(insts) {
-    const mapboxgl = window.mapboxgl || mapRef.current?.__proto__?.constructor;
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
 
     if (!mapRef.current) return;
 
-    insts.forEach((inst) => {
-      const [lng, lat] = inst.coordinates?.coordinates || [0, 0];
-      const color = TYPE_COLORS[inst.type] || "#fff";
+    // mapboxgl is already available via the module-level import inside initMap;
+    // use the stored ref to avoid re-importing inside the loop.
+    import("mapbox-gl").then(({ default: mapboxgl }) => {
+      insts.forEach((inst) => {
+        const [lng, lat] = inst.coordinates?.coordinates || [0, 0];
+        const color = TYPE_COLORS[inst.type] || "#fff";
 
-      const el = document.createElement("div");
-      el.className = "cursor-pointer";
-      el.innerHTML = `<div style="
-        width:16px;height:16px;
-        background:${color};
-        border-radius:50%;
-        border:2px solid white;
-        box-shadow:0 0 8px ${color};
-      "></div>`;
-      el.addEventListener("click", () => setSelectedNode(inst));
+        const el = document.createElement("div");
+        el.className = "cursor-pointer";
+        el.innerHTML = `<div style="
+          width:16px;height:16px;
+          background:${color};
+          border-radius:50%;
+          border:2px solid white;
+          box-shadow:0 0 8px ${color};
+        "></div>`;
+        el.addEventListener("click", () => setSelectedNode(inst));
 
-      // Dynamic import to avoid SSR issues
-      import("mapbox-gl").then(({ default: mapboxgl }) => {
-        const marker = new mapboxgl.Marker({ element: el })
-          .setLngLat([lng, lat])
-          .addTo(mapRef.current);
-        markersRef.current.push(marker);
+        if (mapRef.current) {
+          const marker = new mapboxgl.Marker({ element: el })
+            .setLngLat([lng, lat])
+            .addTo(mapRef.current);
+          markersRef.current.push(marker);
+        }
       });
     });
   }

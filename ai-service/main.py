@@ -102,9 +102,11 @@ def predict(req: PredictRequest):
 
 @app.get("/reports/{report_id}")
 def get_report(report_id: str):
-    # Sanitize: only allow UUID-like names
-    if not all(c in "0123456789abcdef-" for c in report_id.lower()):
-        raise HTTPException(status_code=400, detail="Invalid report ID")
+    # Validate proper UUID format using Python's uuid module
+    try:
+        uuid.UUID(report_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid report ID format")
     path = REPORTS_DIR / f"report_{report_id}.pdf"
     if not path.exists():
         raise HTTPException(status_code=404, detail="Report not found")

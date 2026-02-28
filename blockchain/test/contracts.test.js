@@ -70,23 +70,36 @@ describe("TradeEngine", function () {
     await energyToken.connect(seller).approve(await tradeEngine.getAddress(), tokenAmount);
   });
 
-  it("locks a trade and emits TradeCreated", async function () {
+  it("seller can initiate a trade (lockTrade) and emits TradeInitiated", async function () {
     await expect(
-      tradeEngine.connect(seller).lockTrade(buyer.address, tokenAmount, { value: ethAmount })
+      tradeEngine.connect(seller).lockTrade(buyer.address, tokenAmount)
     )
-      .to.emit(tradeEngine, "TradeCreated")
-      .withArgs(0, seller.address, buyer.address, tokenAmount, ethAmount);
+      .to.emit(tradeEngine, "TradeInitiated")
+      .withArgs(0, seller.address, buyer.address, tokenAmount);
 
     const trade = await tradeEngine.getTrade(0);
     expect(trade.seller).to.equal(seller.address);
     expect(trade.buyer).to.equal(buyer.address);
     expect(trade.tokenAmount).to.equal(tokenAmount);
-    expect(trade.ethAmount).to.equal(ethAmount);
+    expect(trade.ethAmount).to.equal(0);
     expect(trade.status).to.equal(0); // Open
   });
 
-  it("releases a trade", async function () {
-    await tradeEngine.connect(seller).lockTrade(buyer.address, tokenAmount, { value: ethAmount });
+  it("buyer can fund the trade (fundTrade) and emits TradeCreated", async function () {
+    await tradeEngine.connect(seller).lockTrade(buyer.address, tokenAmount);
+    await expect(
+      tradeEngine.connect(buyer).fundTrade(0, { value: ethAmount })
+    )
+      .to.emit(tradeEngine, "TradeCreated")
+      .withArgs(0, seller.address, buyer.address, tokenAmount, ethAmount);
+
+    const trade = await tradeEngine.getTrade(0);
+    expect(trade.ethAmount).to.equal(ethAmount);
+  });
+
+  it("releases a trade after buyer funds it", async function () {
+    await tradeEngine.connect(seller).lockTrade(buyer.address, tokenAmount);
+    await tradeEngine.connect(buyer).fundTrade(0, { value: ethAmount });
 
     const sellerBalanceBefore = await ethers.provider.getBalance(seller.address);
     await expect(tradeEngine.connect(owner).releaseTrade(0))
@@ -101,8 +114,15 @@ describe("TradeEngine", function () {
     expect(trade.status).to.equal(1); // Released
   });
 
-  it("cancels a trade and refunds", async function () {
-    await tradeEngine.connect(seller).lockTrade(buyer.address, tokenAmount, { value: ethAmount });
+  it("cannot release unfunded trade", async function () {
+    await tradeEngine.connect(seller).lockTrade(buyer.address, tokenAmount);
+    await expect(tradeEngine.connect(owner).releaseTrade(0)).to.be.revertedWith(
+      "Trade not yet funded by buyer"
+    );
+  });
+
+  it("cancels a trade and refunds tokens to seller", async function () {
+    await tradeEngine.connect(seller).lockTrade(buyer.address, tokenAmount);
 
     await expect(tradeEngine.connect(owner).cancelTrade(0))
       .to.emit(tradeEngine, "TradeCancelled")
@@ -115,7 +135,8 @@ describe("TradeEngine", function () {
   });
 
   it("prevents releasing a non-open trade", async function () {
-    await tradeEngine.connect(seller).lockTrade(buyer.address, tokenAmount, { value: ethAmount });
+    await tradeEngine.connect(seller).lockTrade(buyer.address, tokenAmount);
+    await tradeEngine.connect(buyer).fundTrade(0, { value: ethAmount });
     await tradeEngine.connect(owner).releaseTrade(0);
     await expect(tradeEngine.connect(owner).releaseTrade(0)).to.be.revertedWith("Trade not open");
   });

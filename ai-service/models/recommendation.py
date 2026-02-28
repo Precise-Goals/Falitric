@@ -41,6 +41,10 @@ WEATHER_RANGES = {
 
 ETH_PER_KWH = 0.0001  # Mock price: 1 kWh = 0.0001 ETH
 
+# Boost factor applied to a source that matches the installation's own type.
+# Gives a 10% advantage to the source the installation is built for.
+INSTALLATION_TYPE_BOOST = 1.1
+
 
 def normalize(value: float, min_val: float, max_val: float) -> float:
     """Normalize value to [0, 1] range."""
@@ -139,7 +143,7 @@ class RecommendationEngine:
 
         # If installation type is known, boost that source
         if installation_type in sources:
-            scores[installation_type] = min(100.0, scores[installation_type] * 1.1)
+            scores[installation_type] = min(100.0, scores[installation_type] * INSTALLATION_TYPE_BOOST)
 
         best_source = max(scores, key=scores.__getitem__)
         best_score = scores[best_source]

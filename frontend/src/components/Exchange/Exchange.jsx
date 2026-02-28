@@ -63,7 +63,7 @@ export default function Exchange() {
       await approveTx.wait();
       setTxStatus("Locking trade...");
 
-      const tradeTx = await engine.lockTrade(buyerAddress, tokenAmountWei, { value: ethAmountWei });
+      const tradeTx = await engine.lockTrade(buyerAddress, tokenAmountWei);
       const receipt = await tradeTx.wait();
       setTxStatus(`Trade locked! Tx: ${receipt.hash.slice(0, 10)}...`);
 

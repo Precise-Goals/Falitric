@@ -107,7 +107,10 @@ def get_report(report_id: str):
         uuid.UUID(report_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid report ID format")
-    path = REPORTS_DIR / f"report_{report_id}.pdf"
+    path = (REPORTS_DIR / f"report_{report_id}.pdf").resolve()
+    # Guard against path traversal: ensure the resolved path stays within REPORTS_DIR
+    if not str(path).startswith(str(REPORTS_DIR.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid report ID format")
     if not path.exists():
         raise HTTPException(status_code=404, detail="Report not found")
     return FileResponse(path, media_type="application/pdf", filename=f"faltric_report_{report_id}.pdf")

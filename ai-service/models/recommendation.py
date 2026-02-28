@@ -141,7 +141,7 @@ class RecommendationEngine:
             for src in sources
         }
 
-        # If installation type is known, boost that source
+        # If installation type is known, boost that source (before final capping)
         if installation_type in sources:
             scores[installation_type] = min(100.0, scores[installation_type] * INSTALLATION_TYPE_BOOST)
 

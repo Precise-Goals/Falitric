@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Faltric - GridMap</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        background: "#080808",
+                        surface: "#121212",
+                        "surface-highlight": "#1E1E1E",
+                        "glass-border": "rgba(255, 255, 255, 0.08)",
+                        "glass-bg": "rgba(18, 18, 18, 0.6)",
+                        "glass-highlight": "rgba(255, 255, 255, 0.03)",
+                        accent: "#FFFFFF",
+                    },
+                    fontFamily: {
+                        display: ["Space Grotesk", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                    boxShadow: {
+                        'glow': '0 0 20px rgba(255, 255, 255, 0.15)',
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+                        'inner-light': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
+                        'soft-depth': '0 4px 12px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.05)',
+                        'btn-depth': '0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                        'btn-active': 'inset 0 2px 4px rgba(0,0,0,0.4)',
+                    },
+                    backgroundImage: {
+                        'skeuo-gradient': 'linear-gradient(180deg, rgba(30,30,30,0.8) 0%, rgba(18,18,18,0.9) 100%)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+        }
+        .map-grid {
+            background-size: 60px 60px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        }
+        .node-pulse {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+            animation: pulse-white 2s infinite;
+        }
+        @keyframes pulse-white {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+            }
+        }::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #080808;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-background text-zinc-300 font-body antialiased overflow-hidden h-screen w-screen selection:bg-white selection:text-black">
+<div class="relative h-full w-full flex flex-col">
+<div class="absolute inset-0 z-0 bg-[#0A0A0A]">
+<div class="absolute inset-0 opacity-40 mix-blend-screen" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD1l0iI0DDesY_eTGaYeFReFxykwqtxDMcCfPnvzYgnHdKLG8HmTCGEwY2S6Z4AeAbcHd-piLvwO4_niK7ZoTXZp57XZqwYugQf8ZNeclPL8oBHxLSB5DxAoYzCYvUnTtfCYiQf59BZ33Ti-5pVWfRW0r4vl5u-zSOpcwSkQyNQNr318jTNBJ_cAdc03f2yz7LNAqAn7CI8OkAWziUSZhA5p0kmyX6xQzr2ebhv5oFs2m8kedZ0ZgcTAEtwxJ4hXFKH0f9qLS_f2gPU'); background-size: cover; filter: grayscale(100%) contrast(1.2) brightness(0.6);">
+</div>
+<div class="absolute inset-0 map-grid pointer-events-none"></div>
+<div class="absolute top-1/3 left-1/4 w-3 h-3 bg-white rounded-full shadow-[0_0_15px_rgba(255,255,255,0.8)] z-10 node-pulse"></div>
+<div class="absolute top-1/2 left-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.9)] z-10 node-pulse" style="animation-delay: 0.5s;"></div>
+<div class="absolute bottom-1/3 right-1/4 w-2 h-2 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.6)] z-10 node-pulse" style="animation-delay: 1s;"></div>
+<div class="absolute top-1/4 right-1/3 w-2 h-2 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.6)] z-10 node-pulse" style="animation-delay: 1.5s;"></div>
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-30">
+<line stroke="white" stroke-width="1" x1="25%" x2="50%" y1="33.3%" y2="50%"></line>
+<line stroke="white" stroke-width="1" x1="50%" x2="75%" y1="50%" y2="66.6%"></line>
+<line stroke="white" stroke-width="1" x1="50%" x2="66.6%" y1="50%" y2="25%"></line>
+</svg>
+<div class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(8,8,8,0.8)_100%)] pointer-events-none"></div>
+</div>
+<header class="fixed top-6 left-1/2 -translate-x-1/2 z-50">
+<nav class="glass-panel px-1.5 py-1.5 rounded-full flex items-center gap-1 shadow-glass">
+<div class="flex items-center gap-3 pl-4 pr-6 border-r border-glass-border">
+<div class="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
+<span class="font-display font-bold tracking-widest uppercase text-sm text-white">Faltric</span>
+</div>
+<a class="px-5 py-2 rounded-full text-xs font-medium text-white bg-white/10 shadow-inner-light transition-all" href="#">
+                GridMap
+            </a>
+<a class="px-5 py-2 rounded-full text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition-all" href="#">
+                Exchange
+            </a>
+<a class="px-5 py-2 rounded-full text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition-all" href="#">
+                Analytics
+            </a>
+<div class="pl-2">
+<button class="flex items-center gap-2 bg-[#1A1A1A] hover:bg-[#222] text-zinc-200 px-4 py-2 rounded-full text-xs font-medium shadow-btn-depth active:shadow-btn-active transition-all border border-glass-border">
+<span class="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+<span>Connect</span>
+</button>
+</div>
+</nav>
+</header>
+<main class="relative z-10 flex-grow flex flex-col justify-between p-8 pointer-events-none">
+<div class="pointer-events-auto mt-24 w-80 flex flex-col gap-4">
+<div class="glass-panel rounded-2xl p-5 flex flex-col gap-4 shadow-soft-depth">
+<div class="flex items-center justify-between border-b border-glass-border pb-3">
+<h2 class="text-xs font-bold uppercase tracking-widest text-zinc-500">Network Status</h2>
+<div class="flex items-center gap-1.5 bg-green-900/30 px-2 py-0.5 rounded text-[10px] text-green-400 border border-green-900/50">
+<div class="w-1 h-1 rounded-full bg-green-400 animate-pulse"></div>
+                        ONLINE
+                    </div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-1">
+<span class="text-[10px] uppercase tracking-wide text-zinc-500">Load</span>
+<span class="text-xl font-display font-medium text-white">84%</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] uppercase tracking-wide text-zinc-500">Output</span>
+<span class="text-xl font-display font-medium text-white">1.2 GW</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] uppercase tracking-wide text-zinc-500">Price</span>
+<span class="text-xl font-display font-medium text-white">0.14 <span class="text-xs text-zinc-500">ETH/kW</span></span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] uppercase tracking-wide text-zinc-500">Nodes</span>
+<span class="text-xl font-display font-medium text-white">4,021</span>
+</div>
+</div>
+<div class="h-16 w-full bg-black/20 rounded-lg border border-glass-border relative overflow-hidden flex items-end px-1 gap-0.5">
+<div class="flex-1 bg-zinc-800/50 hover:bg-zinc-700/80 transition-colors h-[40%] rounded-sm"></div>
+<div class="flex-1 bg-zinc-800/50 hover:bg-zinc-700/80 transition-colors h-[60%] rounded-sm"></div>
+<div class="flex-1 bg-zinc-800/50 hover:bg-zinc-700/80 transition-colors h-[50%] rounded-sm"></div>
+<div class="flex-1 bg-zinc-800/50 hover:bg-zinc-700/80 transition-colors h-[70%] rounded-sm"></div>
+<div class="flex-1 bg-zinc-800/50 hover:bg-zinc-700/80 transition-colors h-[85%] rounded-sm"></div>
+<div class="flex-1 bg-zinc-800/50 hover:bg-zinc-700/80 transition-colors h-[65%] rounded-sm"></div>
+<div class="flex-1 bg-zinc-800/50 hover:bg-zinc-700/80 transition-colors h-[75%] rounded-sm"></div>
+<div class="flex-1 bg-white/80 h-[90%] rounded-sm shadow-[0_0_10px_rgba(255,255,255,0.3)]"></div>
+</div>
+</div>
+<div class="glass-panel rounded-2xl p-0 overflow-hidden shadow-soft-depth transition-transform hover:scale-[1.02] duration-300">
+<div class="p-5">
+<div class="flex items-start justify-between mb-4">
+<div>
+<h3 class="text-sm font-semibold text-white">Node #8392-A</h3>
+<p class="text-[11px] text-zinc-500 mt-0.5">Regional Hub • Brooklyn, NY</p>
+</div>
+<button class="text-zinc-500 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-lg">more_horiz</span>
+</button>
+</div>
+<div class="flex items-center gap-3 mb-4">
+<div class="flex-1 bg-zinc-900/50 rounded-lg p-2 border border-white/5">
+<div class="flex items-center gap-2 text-[10px] text-zinc-400 mb-1">
+<span class="material-symbols-outlined text-[12px]">solar_power</span> Solar Input
+                             </div>
+<div class="text-sm text-white font-medium">420 kWh</div>
+</div>
+<div class="flex-1 bg-zinc-900/50 rounded-lg p-2 border border-white/5">
+<div class="flex items-center gap-2 text-[10px] text-zinc-400 mb-1">
+<span class="material-symbols-outlined text-[12px]">battery_charging_full</span> Capacity
+                             </div>
+<div class="text-sm text-white font-medium">92%</div>
+</div>
+</div>
+<button class="w-full py-2.5 bg-white text-black text-xs font-bold rounded-lg shadow-[0_2px_10px_rgba(255,255,255,0.2)] hover:bg-zinc-200 transition-colors">
+                        Initiate Trade
+                    </button>
+</div>
+</div>
+</div>
+<div class="pointer-events-auto absolute bottom-8 right-8 flex flex-col gap-4 items-end">
+<div class="glass-panel rounded-xl p-1.5 flex flex-col gap-1 shadow-soft-depth">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition-all active:scale-95">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+<div class="h-px w-4 mx-auto bg-white/10"></div>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition-all active:scale-95">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+</div>
+<div class="glass-panel rounded-xl p-1.5 flex flex-col gap-1 shadow-soft-depth">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition-all active:scale-95" title="Layers">
+<span class="material-symbols-outlined text-[20px]">layers</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-zinc-400 hover:text-white transition-all active:scale-95" title="My Location">
+<span class="material-symbols-outlined text-[20px]">my_location</span>
+</button>
+</div>
+</div>
+<div class="pointer-events-auto absolute bottom-8 left-1/2 -translate-x-1/2">
+<div class="glass-panel rounded-full p-1 flex items-center gap-1 shadow-glass">
+<button class="px-4 py-2 rounded-full text-xs font-medium bg-white/10 text-white shadow-inner-light">All Nodes</button>
+<button class="px-4 py-2 rounded-full text-xs font-medium text-zinc-500 hover:text-white hover:bg-white/5 transition-colors">Producers</button>
+<button class="px-4 py-2 rounded-full text-xs font-medium text-zinc-500 hover:text-white hover:bg-white/5 transition-colors">Consumers</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/5 transition-colors ml-1">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+contracts/.env
+
+# Hardhat build artifacts
+contracts/artifacts
+contracts/cache
+contracts/typechain-types

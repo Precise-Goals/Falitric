@@ -1,10 +1,129 @@
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import "tailwindcss";
 
-*{
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  scroll-behavior: smooth;
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
+@theme {
+  /* ── Core neobrutalism palette ───────── */
+  --color-primary: #000000;
+  --color-secondary: #ffffff;
+
+  /* ── Olive green accent system ────────── */
+  --color-olive-50: #f5f7ee;
+  --color-olive-100: #e8edcf;
+  --color-olive-200: #d0db9f;
+  --color-olive-300: #b3c469;
+  --color-olive-400: #8faa3a;
+  --color-olive-500: #6b8a1e; /* primary accent */
+  --color-olive-600: #556f17;
+  --color-olive-700: #415514;
+  --color-olive-800: #2f3e0f;
+  --color-olive-900: #1e2809;
+
+  /* ── Semantic mappings ─────────────────  */
+  --color-accent: #6b8a1e;
+  --color-accent-light: #8faa3a;
+  --color-accent-dark: #415514;
+  --color-accent-muted: #b3c469;
+
+  --color-background-light: #f0f1e8;
+  --color-background-dark: #e4e6d5;
+  --color-surface-dark: #ffffff;
+  --color-surface-border: #000000;
+  --color-text-main: #000000;
+  --color-text-subtle: #4a4a4a;
+
+  /* ── Typography ───────────────────────── */
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Space Grotesk", sans-serif;
+
+  /* ── Neo-shadow tokens ────────────────── */
+  --shadow-neo: 6px 6px 0px 0px #000000;
+  --shadow-neo-sm: 3px 3px 0px 0px #000000;
+  --shadow-neo-lg: 8px 8px 0px 0px #000000;
+  --shadow-neo-olive: 6px 6px 0px 0px #415514;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-display);
+    background-color: #eef0e5;
+  }
+
+  :root {
+    --olive: #6b8a1e;
+    --olive-light: #8faa3a;
+    --olive-dark: #415514;
+    --olive-muted: #d0db9f;
+    --olive-bg: #f5f7ee;
+  }
+}
+
+/* ── Material Symbols Outlined ─────────────── */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: "liga";
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Olive utility overrides ──────────────── */
+.bg-olive {
+  background-color: #6b8a1e;
+}
+.bg-olive-light {
+  background-color: #8faa3a;
+}
+.bg-olive-dark {
+  background-color: #415514;
+}
+.bg-olive-muted {
+  background-color: #d0db9f;
+}
+.bg-olive-50 {
+  background-color: #f5f7ee;
+}
+.text-olive {
+  color: #6b8a1e;
+}
+.text-olive-light {
+  color: #8faa3a;
+}
+.text-olive-dark {
+  color: #415514;
+}
+.border-olive {
+  border-color: #6b8a1e;
+}
+.border-olive-dark {
+  border-color: #415514;
+}
+.shadow-neo-olive {
+  box-shadow: 6px 6px 0px 0px #415514;
+}
+.shadow-neo-sm-olive {
+  box-shadow: 3px 3px 0px 0px #415514;
+}
+
+/* ── Neo-brutalist scroll bars ─────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #eef0e5;
+}
+::-webkit-scrollbar-thumb {
+  background: #6b8a1e;
+  border: 2px solid #000;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #415514;
 }

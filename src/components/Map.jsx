@@ -1,6 +1,28 @@
 import React, { useEffect, useRef, useState } from "react";
-import { database, ref, get, child } from "../firebase";
-import { onValue } from "firebase/database";
+import { database, ref, onValue } from "../firebase";
+
+// ── Module-level singleton so the script is only ever appended ONCE ──────────
+// React StrictMode double-invokes effects; a component-local guard isn't enough.
+let _mapsPromise = null;
+function loadGoogleMapsOnce(apiKey) {
+  if (_mapsPromise) return _mapsPromise;
+  if (window.google?.maps) {
+    _mapsPromise = Promise.resolve();
+    return _mapsPromise;
+  }
+  _mapsPromise = new Promise((resolve, reject) => {
+    const cb = `__gmCb_${Date.now()}`;
+    window[cb] = () => {
+      resolve();
+      delete window[cb];
+    };
+    const s = document.createElement("script");
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=${cb}`;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return _mapsPromise;
+}
 
 const MapComponent = () => {
   const mapRef = useRef(null);
@@ -73,25 +95,26 @@ const MapComponent = () => {
 
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      console.error("Google Maps API key is missing.");
+    if (!apiKey || apiKey === "your_google_maps_api_key_here") {
+      console.warn(
+        "[Faltric] VITE_GOOGLE_MAPS_API_KEY not set in .env — map will not render.",
+      );
       return;
     }
 
-    if (!window.google || !window.google.maps) {
-      const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-
-      window.initMap = () => {
-        if (!mapRef.current) return;
+    let cancelled = false;
+    loadGoogleMapsOnce(apiKey)
+      .then(() => {
+        if (cancelled || !mapRef.current) return;
         initializeGoogleMap();
-      };
-    } else {
-      initializeGoogleMap();
-    }
+      })
+      .catch((err) => {
+        console.error("[Faltric] Google Maps failed to load:", err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
 
     function initializeGoogleMap() {
       const map = new window.google.maps.Map(mapRef.current, {
@@ -296,8 +319,13 @@ const MapComponent = () => {
   }, [map, add]);
 
   return (
-    <div>
+    <div style={{ width: "100%", height: "100%", minHeight: "400px" }}>
       <style>{`
+        .mpp {
+          width: 100%;
+          height: 100%;
+          min-height: 400px;
+        }
         .mpp .gm-bundled-control .gmnoprint,
         .mpp .gm-fullscreen-control {
           transform: scale(0.7);
@@ -313,7 +341,11 @@ const MapComponent = () => {
           font-size: 8px !important;
         }
       `}</style>
-      <div ref={mapRef} className="mpp"></div>
+      <div
+        ref={mapRef}
+        className="mpp"
+        style={{ width: "100%", height: "100%", minHeight: "400px" }}
+      ></div>
     </div>
   );
 };

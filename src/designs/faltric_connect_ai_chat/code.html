@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Faltric Monochromatic AI Chat</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2f7f33",
+                        "neo-bg": "#e6e6e6",
+                        "neo-border": "#000000",
+                        "neo-shadow": "#000000",
+                        "chat-bg": "#ffffff",
+                        "bubble-sent": "#000000",
+                        "bubble-received": "#f2f2f2",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "sans": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0px", 
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        "neo": "6px 6px 0px 0px #000000",
+                        "neo-sm": "3px 3px 0px 0px #000000",
+                        "neo-lg": "8px 8px 0px 0px #000000",
+                        "neo-inner": "inset 3px 3px 0px 0px #000000",
+                    },
+                    borderWidth: {
+                        "3": "3px",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .neo-glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            border: 3px solid #000;
+            box-shadow: 6px 6px 0px 0px #000;
+        }
+        .neo-bubble-received {
+            background: #ffffff;
+            border: 3px solid #000;
+            box-shadow: 4px 4px 0px 0px #000;
+        }
+        .neo-bubble-sent {
+            background: #000000;
+            color: #ffffff;
+            border: 3px solid #000;
+            box-shadow: 4px 4px 0px 0px rgba(0,0,0,0.2);
+        }
+        .pattern-grid {
+            background-image: linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center center;
+            opacity: 0.05;
+        }
+    </style>
+</head>
+<body class="bg-neo-bg text-black font-display min-h-screen flex flex-col overflow-hidden selection:bg-black selection:text-white">
+<header class="w-full border-b-3 border-black bg-white z-50 relative px-6 py-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-10 flex items-center justify-center bg-black text-white border-2 border-black">
+<span class="material-symbols-outlined text-[24px] font-bold">bolt</span>
+</div>
+<h1 class="text-2xl font-bold uppercase tracking-wider hidden sm:block">Faltric</h1>
+</div>
+<nav class="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border-3 border-black shadow-neo-sm px-6 py-2 gap-8 items-center">
+<a class="text-sm font-bold uppercase hover:underline decoration-2 underline-offset-4" href="#">Dashboard</a>
+<a class="text-sm font-bold uppercase hover:underline decoration-2 underline-offset-4" href="#">Grid Map</a>
+<a class="text-sm font-bold uppercase hover:underline decoration-2 underline-offset-4" href="#">Marketplace</a>
+<a class="text-sm font-bold uppercase bg-black text-white px-3 py-1" href="#">Connect &amp; AI</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="hidden sm:flex h-10 px-6 cursor-pointer items-center justify-center bg-white text-black text-sm font-bold uppercase border-3 border-black shadow-neo hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-neo-sm transition-all active:translate-x-[4px] active:translate-y-[4px] active:shadow-none">
+<span>0x84...2A</span>
+</button>
+<div class="bg-center bg-no-repeat bg-cover size-10 border-3 border-black shadow-neo-sm" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBjw_F7ipYmAhoS0uQCHWfU-wyQ4eZ__juEOmE2uZwMG4ImzQAFNVsSETGNlY_1yXGWHXvr-3s49XI6vHE5sDidVIZthZoVYwn2ulTa3qfQmY9RfXZQXOJz96bGtbQ67XW85QU4Vb9zstVkoqzwHHTX8hV81IyjO7oOxmBxHJlU9lsuf9Z8eTr6YBkUHCFOy92Y_jjo-auY0Ak-z4h61eoU04BUTycVd7wWnGuh3KQ0889KWXwWB7-64ugeSs9ho9GdmsadHDlQvKLP");'></div>
+</div>
+</header>
+<main class="flex-1 relative flex flex-col items-center justify-center w-full h-[calc(100vh-84px)] overflow-hidden bg-neo-bg">
+<div class="absolute inset-0 pattern-grid pointer-events-none"></div>
+<div class="w-full max-w-5xl h-full flex flex-col bg-white border-x-3 border-black relative z-10 shadow-2xl">
+<div class="h-16 border-b-3 border-black bg-white flex items-center justify-between px-6 py-2 flex-shrink-0">
+<div class="flex items-center gap-4">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="text-xl font-bold uppercase"># Global-Grid</span>
+<span class="size-2 rounded-full bg-green-500 border border-black"></span>
+</div>
+<span class="text-xs font-mono text-gray-500 uppercase">128 Nodes Active • P2P Network Live</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex -space-x-3 mr-4">
+<div class="size-8 rounded-full border-2 border-white bg-cover shadow-sm grayscale hover:grayscale-0 transition-all z-0 hover:z-10" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAhSm48n4HRDbBU_Ywbo6bbrv49O6zt9TT8IfEysw6Vk3n7ZlQSJQAcI3QpBSDg2RmOtHORPjZI7Yb6xC8VKsBMM2mcrqgm6lZLShSWXMrLOUA1DDWO-iYI5zgAzhmg5H0ONmDbY2wuydMOMWqJQ0Xor_GuXvJWSLSsraSiPCZ_RySDLvxSZg2gjDD2KNSOs6S2FOel_e4PrFhSu6RgfbyFUot0BnuepRXsJB_f_PLX4Ay6wJzQm5VsG7Of0t08jsZK22QS6nxlDgce");'></div>
+<div class="size-8 rounded-full border-2 border-white bg-cover shadow-sm grayscale hover:grayscale-0 transition-all z-0 hover:z-10" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC4XATqcOaB5canppVbFh_vQnw-v7EdtQEflNFBvF0_xidkiq57Y5TtCCD4qWzgiLxoKs8UVmlXqlDXfjqe6rqjy9wmsOUTdBiQzN2Ua-dZFEYjk0ezg0t8sTxS5d2xMyoqtKue3G-p0jHzU4_MJYSSpi2oBH_eiZYSxJC9RUlI9E9vbzevGzGr3tok6PP6n07HOHT0CJN1zIeVTDpmIdeDIVf5ih8Db3m_Mm4LOq5-qNHqpyv6PB2tQqBM054uwAtVmQKxaASk8py3");'></div>
+<div class="size-8 rounded-full border-2 border-white bg-cover shadow-sm grayscale hover:grayscale-0 transition-all z-0 hover:z-10" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDfGzx88GZ2Ue71V9JR82R4S_P5LWRfnaJI5CuDgc61RbGKCENEpgd8ZAwvFsRtj4gqq_NWCl2TEv3iHp2__BYZ5fEInxFyQSuQo29nwQAy8hGoZ4Vft8myStciP7Jk1PjujHZeIpElQQOUPEYENxlkHsgXEZHPez8gCg3vWzpYH2ZbjbBckBwTiIwejq2QSMdxolsyN_xQtowl6SSArKG92nWibfQryffpjRlGfnzqLICecVPDloVudVuHJIyj-20V1yZ-VkYSAxGX");'></div>
+<div class="size-8 rounded-full border-2 border-white bg-black text-white text-xs flex items-center justify-center font-bold z-20">+124</div>
+</div>
+<button class="size-10 border-3 border-black bg-white hover:bg-black hover:text-white transition-colors flex items-center justify-center shadow-neo-sm active:shadow-none active:translate-x-[2px] active:translate-y-[2px]">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="size-10 border-3 border-black bg-white hover:bg-black hover:text-white transition-colors flex items-center justify-center shadow-neo-sm active:shadow-none active:translate-x-[2px] active:translate-y-[2px]">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-8 bg-[#f8f8f8]">
+<div class="flex items-center justify-center">
+<span class="bg-black text-white px-4 py-1 text-xs font-bold uppercase border-2 border-black shadow-neo-sm">Today, October 24</span>
+</div>
+<div class="flex gap-4 items-start max-w-3xl">
+<div class="flex-shrink-0 mt-1">
+<div class="size-12 bg-white border-3 border-black flex items-center justify-center shadow-neo-sm">
+<span class="material-symbols-outlined text-[24px]">smart_toy</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 w-full">
+<div class="flex items-baseline gap-2">
+<span class="font-bold text-lg">DeepSeek Grid AI</span>
+<span class="text-xs font-mono text-gray-500">10:42 AM</span>
+</div>
+<div class="neo-bubble-received p-5 text-black">
+<p class="font-medium mb-3 text-sm md:text-base"><strong>Grid Alert:</strong> Solar output in Sector 7 has increased by 15% in the last hour. Current load is stable at 84%.</p>
+<p class="text-sm md:text-base">I recommend initiating P2P sell orders for surplus energy to optimize returns before the projected midday dip.</p>
+<div class="mt-4 flex gap-3 flex-wrap">
+<button class="px-4 py-2 text-xs font-bold bg-white border-3 border-black shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all uppercase">
+                                    Analyze Trends
+                                </button>
+<button class="px-4 py-2 text-xs font-bold bg-gray-200 border-3 border-black shadow-neo-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all uppercase text-gray-600">
+                                    Dismiss
+                                </button>
+</div>
+</div>
+</div>
+</div>
+<div class="flex gap-4 flex-row-reverse items-start max-w-3xl ml-auto">
+<div class="flex-shrink-0 mt-1">
+<div class="size-12 bg-cover bg-center border-3 border-black shadow-neo-sm" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBeErwaqeqjKPgtvhBVxYwp1k-LDqrprC4TlDoEpvO7h81hzwgxQxNBSS1vTEWvVrqIDu6nDh8cdKdp7UxA6kLnLIHWvCNc_GxlMK5cbi3O5xZfLgpoqigFvhArix0HAqzZOSPtACKtOTKthOBm20CW3ulMfIlSmtpF8EYTOP9sVXuxU-Lc7ZWC_Srk2m1VcktXKKsOTo6H-4eUhvNXvpFqVYDwsdFVohXi1-9JNhm9FtFkpLNmUXD1L0ydk9c9t_SWiWwvGRMQUenn");'></div>
+</div>
+<div class="flex flex-col gap-2 items-end w-full">
+<div class="flex items-baseline gap-2 flex-row-reverse">
+<span class="font-bold text-lg">You</span>
+<span class="text-xs font-mono text-gray-500">10:45 AM</span>
+</div>
+<div class="neo-bubble-sent p-5 bg-black text-white border-3 border-black">
+<p class="text-sm md:text-base font-medium">Show me the latest P2P trading rates for solar energy in my region.</p>
+</div>
+</div>
+</div>
+<div class="flex gap-4 items-start max-w-3xl">
+<div class="flex-shrink-0 mt-1">
+<div class="size-12 bg-cover bg-center border-3 border-black shadow-neo-sm grayscale" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBZJOVI7bI1vZGmr0cw_SrrNjzFfIsMc6Oo2bFkzrTtC9ppSEx8xFhOf2KuztJclIhlpgiTDFNd1fSDPwj-zLgFO8YDUep-q8bHDpTBNbVTRjDNO_wQadfZX4Kpf2TWE4mm2mvprLaPKC87_VEd-RPxmRWaylHuolL-LrV2pi4YSiP7I_Dr0bGfIcy9gI5PIidiQOXqf2wSQiJHLUU4r83sIqU4Ch6wqYVjv6ysn8eu5fjDEneWZOJiWxvGCsEz5rODYom8jzb0Mr4L");'></div>
+</div>
+<div class="flex flex-col gap-2 w-full">
+<div class="flex items-baseline gap-2">
+<span class="font-bold text-lg">CryptoEnergy_01</span>
+<span class="text-xs font-mono text-gray-500">10:48 AM</span>
+</div>
+<div class="neo-bubble-received p-5 text-black">
+<p class="text-sm md:text-base font-medium">Anyone else seeing the spike in wind energy prices? My dashboard is showing +8%.</p>
+</div>
+</div>
+</div>
+<div class="flex gap-4 items-start max-w-3xl">
+<div class="flex-shrink-0 mt-1">
+<div class="size-12 bg-white border-3 border-black flex items-center justify-center shadow-neo-sm">
+<span class="material-symbols-outlined text-[24px]">smart_toy</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 w-full">
+<div class="flex items-baseline gap-2">
+<span class="font-bold text-lg">DeepSeek Grid AI</span>
+<span class="text-xs font-mono text-gray-500">10:49 AM</span>
+</div>
+<div class="neo-bubble-received p-0 overflow-hidden">
+<div class="p-5 border-b-3 border-black bg-white">
+<p class="text-sm md:text-base font-medium">Here are the current average P2P solar trading rates for Region: <span class="bg-black text-white px-1">North-East Sector</span>.</p>
+</div>
+<div class="bg-gray-50 p-5">
+<div class="w-full border-3 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+<div class="flex justify-between items-center p-3 border-b-3 border-black bg-gray-100">
+<span class="text-xs font-bold uppercase tracking-wide">Token</span>
+<span class="text-xs font-bold uppercase tracking-wide">Rate (kWh)</span>
+<span class="text-xs font-bold uppercase tracking-wide">Trend</span>
+</div>
+<div class="flex justify-between items-center p-3 border-b border-black">
+<div class="flex items-center gap-2">
+<div class="size-3 bg-yellow-400 border-2 border-black rounded-full"></div>
+<span class="font-bold text-sm">FLT-SOL</span>
+</div>
+<span class="font-mono text-sm font-bold">0.14 USDC</span>
+<span class="text-green-600 text-xs font-extrabold bg-green-100 px-1 border border-black">▲ 2.4%</span>
+</div>
+<div class="flex justify-between items-center p-3">
+<div class="flex items-center gap-2">
+<div class="size-3 bg-blue-400 border-2 border-black rounded-full"></div>
+<span class="font-bold text-sm">FLT-WND</span>
+</div>
+<span class="font-mono text-sm font-bold">0.11 USDC</span>
+<span class="text-red-600 text-xs font-extrabold bg-red-100 px-1 border border-black">▼ 0.8%</span>
+</div>
+</div>
+<p class="text-[10px] text-gray-500 font-mono mt-3 text-right uppercase tracking-wider">Data via Chainlink Oracle • 30s ago</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-6 bg-white border-t-3 border-black z-30">
+<form class="flex gap-4 items-stretch" onsubmit="event.preventDefault();">
+<button class="w-14 flex items-center justify-center border-3 border-black bg-white text-black hover:bg-black hover:text-white transition-colors shadow-neo-sm active:translate-x-[2px] active:translate-y-[2px] active:shadow-none" type="button">
+<span class="material-symbols-outlined">add</span>
+</button>
+<div class="flex-1 relative">
+<input class="w-full h-14 pl-4 pr-12 bg-white text-black placeholder:text-gray-400 border-3 border-black focus:ring-0 focus:outline-none text-lg font-medium shadow-neo-sm focus:shadow-neo transition-all" placeholder="Ask DeepSeek about grid stats..." type="text"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-600 transition-colors" type="button">
+<span class="material-symbols-outlined">mic</span>
+</button>
+</div>
+<button class="w-20 flex items-center justify-center bg-black border-3 border-black text-white hover:bg-gray-800 transition-colors shadow-neo active:translate-x-[2px] active:translate-y-[2px] active:shadow-neo-sm" type="submit">
+<span class="material-symbols-outlined">send</span>
+</button>
+</form>
+<div class="text-center mt-3 flex justify-center gap-2 items-center">
+<div class="h-px bg-gray-300 w-12"></div>
+<p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Powered by DeepSeek AI</p>
+<div class="h-px bg-gray-300 w-12"></div>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

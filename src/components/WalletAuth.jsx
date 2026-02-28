@@ -1,49 +1,69 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { ethers } from "ethers";
+import { database, ref, get, set, update } from "../firebase";
+import Navbar from "./Navbar";
 import "./WalletAuth.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+// ── Constants ─────────────────────────────────────────
+const ADMIN_EMAIL = "test@admin.com";
+const ADMIN_PASSWORD = "testadmin";
 
-// ── Truncate wallet address for display ──────────────
-const shortAddr = (addr) =>
-  addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : "";
+// ── Wallet address => safe Firebase key ───────────────
+const walletKey = (addr) => addr.toLowerCase().replace(/[.#$[\]]/g, "_");
 
-// ── Request MetaMask connection ───────────────────────
+// ── Connect MetaMask ──────────────────────────────────
 async function connectMetaMask() {
-  if (!window.ethereum) {
-    throw new Error(
-      "MetaMask is not installed. Please install it from metamask.io",
-    );
-  }
+  if (!window.ethereum)
+    throw new Error("MetaMask is not installed. Get it at metamask.io");
   const provider = new ethers.BrowserProvider(window.ethereum);
   await provider.send("eth_requestAccounts", []);
   const signer = await provider.getSigner();
   const address = await signer.getAddress();
-  return { provider, signer, address };
+  return { signer, address };
 }
 
-// ── Sign an arbitrary message with MetaMask ──────────
-async function signMessage(signer, message) {
-  return signer.signMessage(message);
+// ── Firebase: get user by wallet ──────────────────────
+async function getUserByWallet(walletAddress) {
+  const snap = await get(
+    ref(database, `faltric_users/${walletKey(walletAddress)}`),
+  );
+  return snap.exists() ? snap.val() : null;
 }
 
-// ── POST helper ───────────────────────────────────────
-async function post(endpoint, body) {
-  const res = await fetch(`${API_BASE}/api/auth${endpoint}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+// ── Firebase: check email uniqueness ─────────────────
+async function emailExists(email) {
+  const snap = await get(ref(database, "faltric_users"));
+  if (!snap.exists()) return false;
+  return Object.values(snap.val()).some(
+    (u) => u.email?.toLowerCase() === email.toLowerCase(),
+  );
+}
+
+// ── Firebase: write new user ──────────────────────────
+async function createUser(walletAddress, data) {
+  await set(ref(database, `faltric_users/${walletKey(walletAddress)}`), {
+    ...data,
+    wallet_address: walletAddress.toLowerCase(),
+    current_units: 0,
+    token_balance: 1000, // starter tokens for demo
+    role: "consumer",
+    createdAt: Date.now(),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Request failed");
-  return data;
+}
+
+// ── Signature verification ────────────────────────────
+function verifySignature(message, signature, expectedAddress) {
+  try {
+    const recovered = ethers.verifyMessage(message, signature);
+    return recovered.toLowerCase() === expectedAddress.toLowerCase();
+  } catch {
+    return false;
+  }
 }
 
 // ─────────────────────────────────────────────────────
-//  Sub-components
+//  Neo input component
 // ─────────────────────────────────────────────────────
-
-/** Reusable neo-brutalist input */
 const NeoInput = ({ label, id, ...props }) => (
   <div className="form-group">
     {label && <label htmlFor={id}>{label}</label>}
@@ -51,18 +71,125 @@ const NeoInput = ({ label, id, ...props }) => (
   </div>
 );
 
-/** Screen 1 — Connect Wallet */
-function ConnectScreen({ onConnect, loading, error }) {
+// ─────────────────────────────────────────────────────
+//  Screen 0: Admin Login (email + password — no wallet)
+// ─────────────────────────────────────────────────────
+function AdminLoginScreen({ onAdminSuccess, onSwitchToWallet }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    await new Promise((r) => setTimeout(r, 400)); // slight UX delay
+    if (
+      email.trim().toLowerCase() === ADMIN_EMAIL &&
+      password === ADMIN_PASSWORD
+    ) {
+      const adminUser = {
+        wallet_address: "admin",
+        name: "Grid Admin",
+        email: ADMIN_EMAIL,
+        token_balance: 0,
+        current_units: 0,
+        role: "admin",
+      };
+      localStorage.setItem("faltric_user", JSON.stringify(adminUser));
+      onAdminSuccess(adminUser);
+    } else {
+      setError("Invalid credentials. Check email and password.");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="faltric-card">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          marginBottom: "6px",
+        }}
+      >
+        <span
+          className="material-symbols-outlined"
+          style={{ color: "#6b8a1e", fontSize: "32px" }}
+        >
+          admin_panel_settings
+        </span>
+        <h2 style={{ margin: 0 }}>Admin Login</h2>
+      </div>
+      <span className="card-subtitle">
+        Restricted access — Grid Controllers only
+      </span>
+
+      <form onSubmit={handleLogin} noValidate>
+        <NeoInput
+          label="Admin Email"
+          id="admin-email"
+          name="email"
+          type="email"
+          placeholder="test@admin.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <NeoInput
+          label="Password"
+          id="admin-password"
+          name="password"
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button
+          id="btn-admin-login"
+          type="submit"
+          className="btn-neo btn-green"
+          disabled={loading}
+          style={{ marginTop: "0.5rem" }}
+        >
+          {loading ? (
+            <>
+              <span className="spinner" /> Verifying…
+            </>
+          ) : (
+            "🛡️ Enter Admin Panel"
+          )}
+        </button>
+      </form>
+
+      {error && <div className="faltric-status error">{error}</div>}
+
+      <div className="mode-toggle">
+        <button type="button" onClick={onSwitchToWallet}>
+          ← Back to Wallet Login
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────
+//  Screen 1: Connect Wallet
+// ─────────────────────────────────────────────────────
+function ConnectScreen({ onConnect, onAdminLogin, loading, error }) {
   return (
     <div className="faltric-card">
       <div className="faltric-connect-screen">
         <div className="wallet-icon">⚡</div>
         <div>
           <h2 style={{ color: "#fff", marginBottom: "0.5rem" }}>
-            Wallet-First Login
+            Wallet-First Access
           </h2>
           <p>
-            Connect your MetaMask wallet to access Faltric's decentralized
+            Connect your MetaMask wallet to access Faltric's decentralised
             renewable energy marketplace.
           </p>
         </div>
@@ -81,8 +208,15 @@ function ConnectScreen({ onConnect, loading, error }) {
           )}
         </button>
         {error && <div className="faltric-status error">{error}</div>}
+        <button
+          className="btn-neo"
+          onClick={onAdminLogin}
+          style={{ background: "#6b8a1e", color: "#fff", marginTop: "4px" }}
+        >
+          🛡️ Admin Login
+        </button>
         <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.3)" }}>
-          No wallet yet?{" "}
+          No wallet?{" "}
           <a
             href="https://metamask.io/download/"
             target="_blank"
@@ -97,12 +231,13 @@ function ConnectScreen({ onConnect, loading, error }) {
   );
 }
 
-/** Screen 2 — Sign Up */
+// ─────────────────────────────────────────────────────
+//  Screen 2: Sign Up
+// ─────────────────────────────────────────────────────
 function SignupScreen({ walletAddress, signer, onSuccess, onSwitchToLogin }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    password: "",
     phone: "",
     electricity_consumer_number: "",
   });
@@ -114,32 +249,61 @@ function SignupScreen({ walletAddress, signer, onSuccess, onSwitchToLogin }) {
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    if (
+      !form.name ||
+      !form.email ||
+      !form.phone ||
+      !form.electricity_consumer_number
+    )
+      return setStatus({ type: "error", msg: "All fields are required." });
+
     setLoading(true);
     setStatus(null);
 
     try {
-      setStatus({ type: "info", msg: "Please sign the message in MetaMask…" });
+      if (await emailExists(form.email))
+        return setStatus({
+          type: "error",
+          msg: "An account with this email already exists.",
+        });
 
-      const message = `Sign up for Faltric with wallet: ${walletAddress.toLowerCase()}`;
-      const signature = await signMessage(signer, message);
-
-      setStatus({ type: "info", msg: "Creating your account…" });
-      const data = await post("/signup", {
-        ...form,
-        wallet_address: walletAddress,
-        signature,
-      });
-
-      localStorage.setItem("faltric_token", data.token);
-      localStorage.setItem("faltric_user", JSON.stringify(data.user));
       setStatus({
-        type: "success",
-        msg: "Account created! Welcome to Faltric 🌿",
+        type: "info",
+        msg: "Please sign the message in MetaMask to verify wallet ownership…",
       });
 
-      setTimeout(() => onSuccess(data.user), 800);
+      const message = `Register on Faltric\nWallet: ${walletAddress.toLowerCase()}\nTimestamp: ${Date.now()}`;
+      const signature = await signer.signMessage(message);
+
+      if (!verifySignature(message, signature, walletAddress))
+        return setStatus({ type: "error", msg: "Wallet signature invalid." });
+
+      await createUser(walletAddress, {
+        name: form.name.trim(),
+        email: form.email.toLowerCase().trim(),
+        phone: form.phone.trim(),
+        electricity_consumer_number: form.electricity_consumer_number.trim(),
+      });
+
+      const userData = {
+        wallet_address: walletAddress.toLowerCase(),
+        name: form.name.trim(),
+        email: form.email.toLowerCase().trim(),
+        token_balance: 1000,
+        current_units: 0,
+        role: "consumer",
+      };
+
+      localStorage.setItem("faltric_user", JSON.stringify(userData));
+      setStatus({ type: "success", msg: "Welcome to Faltric! 🌿" });
+      setTimeout(() => onSuccess(userData), 700);
     } catch (err) {
-      setStatus({ type: "error", msg: err.message });
+      if (err.code === "ACTION_REJECTED")
+        setStatus({
+          type: "error",
+          msg: "Signature cancelled. Please try again.",
+        });
+      else setStatus({ type: "error", msg: err.message });
     } finally {
       setLoading(false);
     }
@@ -168,7 +332,6 @@ function SignupScreen({ walletAddress, signer, onSuccess, onSwitchToLogin }) {
           onChange={handleChange}
           required
         />
-
         <div className="form-row">
           <NeoInput
             label="Email"
@@ -191,9 +354,8 @@ function SignupScreen({ walletAddress, signer, onSuccess, onSwitchToLogin }) {
             required
           />
         </div>
-
         <NeoInput
-          label="Consumer Number (Electricity)"
+          label="Electricity Consumer Number"
           id="signup-consumer"
           name="electricity_consumer_number"
           type="text"
@@ -202,19 +364,6 @@ function SignupScreen({ walletAddress, signer, onSuccess, onSwitchToLogin }) {
           onChange={handleChange}
           required
         />
-
-        <NeoInput
-          label="Password (min 8 characters)"
-          id="signup-password"
-          name="password"
-          type="password"
-          placeholder="••••••••"
-          value={form.password}
-          onChange={handleChange}
-          required
-          minLength={8}
-        />
-
         <button
           id="btn-signup-submit"
           type="submit"
@@ -235,7 +384,6 @@ function SignupScreen({ walletAddress, signer, onSuccess, onSwitchToLogin }) {
       {status && (
         <div className={`faltric-status ${status.type}`}>{status.msg}</div>
       )}
-
       <div className="mode-toggle">
         <button type="button" onClick={onSwitchToLogin}>
           Already have an account? Sign in instead
@@ -245,42 +393,58 @@ function SignupScreen({ walletAddress, signer, onSuccess, onSwitchToLogin }) {
   );
 }
 
-/** Screen 3 — Login */
+// ─────────────────────────────────────────────────────
+//  Screen 3: Login
+// ─────────────────────────────────────────────────────
 function LoginScreen({ walletAddress, signer, onSuccess, onSwitchToSignup }) {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (!email) return setStatus({ type: "error", msg: "Email is required." });
+
     setLoading(true);
     setStatus(null);
 
     try {
+      const user = await getUserByWallet(walletAddress);
+      if (!user)
+        return setStatus({
+          type: "error",
+          msg: "No account found for this wallet. Please sign up.",
+        });
+      if (user.email?.toLowerCase() !== email.toLowerCase())
+        return setStatus({
+          type: "error",
+          msg: "Email does not match the account registered to this wallet.",
+        });
+
       setStatus({
         type: "info",
-        msg: "Please sign the verification message in MetaMask…",
+        msg: "Sign the verification message in MetaMask…",
       });
 
-      const message = `Sign in to Faltric: ${walletAddress.toLowerCase()}`;
-      const signature = await signMessage(signer, message);
+      const message = `Sign in to Faltric\nWallet: ${walletAddress.toLowerCase()}\nTimestamp: ${Date.now()}`;
+      const signature = await signer.signMessage(message);
 
-      setStatus({ type: "info", msg: "Verifying credentials…" });
-      const data = await post("/login", {
-        email,
-        password,
-        wallet_address: walletAddress,
-        signature,
-      });
+      if (!verifySignature(message, signature, walletAddress))
+        return setStatus({ type: "error", msg: "Wallet signature invalid." });
 
-      localStorage.setItem("faltric_token", data.token);
-      localStorage.setItem("faltric_user", JSON.stringify(data.user));
+      // Sync fresh balance from Firebase
+      const freshUser = await getUserByWallet(walletAddress);
+      const { password: _p, ...safe } = freshUser || user;
+      localStorage.setItem("faltric_user", JSON.stringify(safe));
       setStatus({ type: "success", msg: "Welcome back! 🌿" });
-
-      setTimeout(() => onSuccess(data.user), 600);
+      setTimeout(() => onSuccess(safe), 600);
     } catch (err) {
-      setStatus({ type: "error", msg: err.message });
+      if (err.code === "ACTION_REJECTED")
+        setStatus({
+          type: "error",
+          msg: "Signature cancelled. Please try again.",
+        });
+      else setStatus({ type: "error", msg: err.message });
     } finally {
       setLoading(false);
     }
@@ -290,7 +454,7 @@ function LoginScreen({ walletAddress, signer, onSuccess, onSwitchToSignup }) {
     <div className="faltric-card">
       <h2>Sign In</h2>
       <span className="card-subtitle">
-        Wallet found — verify your identity to continue
+        Wallet recognised — confirm your email to continue
       </span>
 
       <div className="wallet-badge">
@@ -309,17 +473,6 @@ function LoginScreen({ walletAddress, signer, onSuccess, onSwitchToSignup }) {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <NeoInput
-          label="Password"
-          id="login-password"
-          name="password"
-          type="password"
-          placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-
         <button
           id="btn-login-submit"
           type="submit"
@@ -329,7 +482,7 @@ function LoginScreen({ walletAddress, signer, onSuccess, onSwitchToSignup }) {
         >
           {loading ? (
             <>
-              <span className="spinner" /> Signing in…
+              <span className="spinner" /> Verifying…
             </>
           ) : (
             "⚡ Sign In & Verify Wallet"
@@ -340,7 +493,6 @@ function LoginScreen({ walletAddress, signer, onSuccess, onSwitchToSignup }) {
       {status && (
         <div className={`faltric-status ${status.type}`}>{status.msg}</div>
       )}
-
       <div className="mode-toggle">
         <button type="button" onClick={onSwitchToSignup}>
           New wallet? Create an account
@@ -351,50 +503,47 @@ function LoginScreen({ walletAddress, signer, onSuccess, onSwitchToSignup }) {
 }
 
 // ─────────────────────────────────────────────────────
-//  Main WalletAuth Gate
+//  WalletAuth Gate (root export)
 // ─────────────────────────────────────────────────────
-
-/**
- * WalletAuth — Wallet-first authentication gate.
- *
- * Render children only when the user is authenticated.
- * Wraps the authenticated state in a Faltric top-bar.
- *
- * Usage:
- *   <WalletAuth>
- *     <YourApp />
- *   </WalletAuth>
- */
 export default function WalletAuth({ children }) {
-  // ── Restore session from localStorage ──
   const [user, setUser] = useState(() => {
     try {
       const stored = localStorage.getItem("faltric_user");
-      const token = localStorage.getItem("faltric_token");
-      if (stored && token) return JSON.parse(stored);
-    } catch {}
-    return null;
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
   });
 
   const [walletAddress, setWalletAddress] = useState(null);
   const [signer, setSigner] = useState(null);
-  const [screen, setScreen] = useState("connect"); // connect | signup | login
+  const [screen, setScreen] = useState("connect");
   const [connectLoading, setConnectLoading] = useState(false);
   const [connectError, setConnectError] = useState(null);
 
-  // ── Handle MetaMask connect ──
+  // Sync balance from Firebase on mount (for non-admin)
+  useEffect(() => {
+    if (!user || user.role === "admin" || !user.wallet_address) return;
+    get(ref(database, `faltric_users/${walletKey(user.wallet_address)}`)).then(
+      (snap) => {
+        if (snap.exists()) {
+          const fresh = { ...user, ...snap.val() };
+          setUser(fresh);
+          localStorage.setItem("faltric_user", JSON.stringify(fresh));
+        }
+      },
+    );
+  }, []); // eslint-disable-line
+
   const handleConnect = useCallback(async () => {
     setConnectLoading(true);
     setConnectError(null);
-
     try {
       const { signer: s, address } = await connectMetaMask();
       setWalletAddress(address);
       setSigner(s);
-
-      // Check if wallet is registered
-      const result = await post("/check-wallet", { wallet_address: address });
-      setScreen(result.exists ? "login" : "signup");
+      const existing = await getUserByWallet(address);
+      setScreen(existing ? "login" : "signup");
     } catch (err) {
       setConnectError(err.message);
     } finally {
@@ -402,9 +551,7 @@ export default function WalletAuth({ children }) {
     }
   }, []);
 
-  // ── Handle logout ──
   const handleLogout = () => {
-    localStorage.removeItem("faltric_token");
     localStorage.removeItem("faltric_user");
     setUser(null);
     setWalletAddress(null);
@@ -412,54 +559,39 @@ export default function WalletAuth({ children }) {
     setScreen("connect");
   };
 
-  // ── Authenticated → render app shell + children ──
   if (user) {
     return (
-      <div className="faltric-app-shell">
-        <header className="faltric-topbar">
-          <span className="topbar-brand">⚡ Faltric</span>
-          <div className="topbar-wallet">
-            {user.token_balance !== undefined && (
-              <span className="fal-balance">
-                🪙 {user.token_balance.toFixed(2)} FAL
-              </span>
-            )}
-            <span className="topbar-addr">
-              {shortAddr(user.wallet_address)}
-            </span>
-            <button
-              id="btn-logout"
-              className="btn-logout"
-              onClick={handleLogout}
-            >
-              Disconnect
-            </button>
-          </div>
-        </header>
-        <div className="faltric-app-content">{children}</div>
+      <div className="flex flex-col min-h-screen">
+        <Navbar user={user} onLogout={handleLogout} />
+        <div className="flex-1 flex flex-col">
+          {typeof children === "function" ? children(user) : children}
+        </div>
       </div>
     );
   }
 
-  // ── Unauthenticated → auth gate ──
   return (
     <div className="faltric-auth-gate">
-      {/* Brand Header */}
       <div className="faltric-brand">
         <span className="brand-tag">Execute Hackathon 2026</span>
         <h1>Faltric</h1>
-        <p>Decentralized Renewable Energy Marketplace</p>
+        <p>Decentralised Renewable Energy Marketplace</p>
       </div>
 
-      {/* Auth Card */}
       {screen === "connect" && (
         <ConnectScreen
           onConnect={handleConnect}
+          onAdminLogin={() => setScreen("admin")}
           loading={connectLoading}
           error={connectError}
         />
       )}
-
+      {screen === "admin" && (
+        <AdminLoginScreen
+          onAdminSuccess={setUser}
+          onSwitchToWallet={() => setScreen("connect")}
+        />
+      )}
       {screen === "signup" && walletAddress && (
         <SignupScreen
           walletAddress={walletAddress}
@@ -468,7 +600,6 @@ export default function WalletAuth({ children }) {
           onSwitchToLogin={() => setScreen("login")}
         />
       )}
-
       {screen === "login" && walletAddress && (
         <LoginScreen
           walletAddress={walletAddress}

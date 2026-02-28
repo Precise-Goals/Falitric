@@ -1,6 +1,17 @@
-// Import the functions you need from the SDKs you need
+// firebase.js — Faltric shared Firebase client
 import { initializeApp } from "firebase/app";
+import {
+  getDatabase,
+  ref,
+  get,
+  set,
+  update,
+  push,
+  onValue,
+  remove,
+} from "firebase/database";
 import { getAnalytics } from "firebase/analytics";
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
   authDomain: import.meta.env.VITE_AUTH_DOMAIN,
@@ -13,4 +24,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+export const analytics = getAnalytics(app);
+export const database = getDatabase(app);
+
+// ── Re-export helpers so all components import from one place ──
+export { ref, get, set, update, push, onValue, remove };

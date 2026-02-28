@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Faltric - AI Energy Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#e0e5ec", 
+                        accent: "#00E676", // Glowing Green
+                        dark: "#2b3035",
+                        "soft-gray": "#f0f2f5",
+                        "clay-white": "#f8f9fa",
+                        "text-main": "#374151",
+                        "text-sub": "#6b7280"
+                    },
+                    fontFamily: {
+                        display: ["Space Grotesk", "sans-serif"],
+                        body: ["Noto Sans", "sans-serif"],
+                    },
+                    boxShadow: {
+                        'clay': '8px 8px 16px #d1d5db, -8px -8px 16px #ffffff',
+                        'clay-inset': 'inset 6px 6px 12px #d1d5db, inset -6px -6px 12px #ffffff',
+                        'clay-sm': '4px 4px 8px #d1d5db, -4px -4px 8px #ffffff',
+                        'clay-hover': '12px 12px 24px #d1d5db, -12px -12px 24px #ffffff',
+                        'glow': '0 0 15px rgba(0, 230, 118, 0.6)',
+                        'float': '0 10px 30px -10px rgba(0,0,0,0.1)'
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #eef1f5;
+            color: #374151;
+        }
+        .clay-card {
+            background: #eef1f5;
+            border-radius: 24px;
+            box-shadow: 9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .clay-card-inset {
+            background: #eef1f5;
+            border-radius: 16px;
+            box-shadow: inset 6px 6px 10px 0 rgba(163,177,198, 0.7), inset -6px -6px 10px 0 rgba(255,255,255, 0.8);
+        }
+        .glass-nav {
+            background: rgba(238, 241, 245, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+        }
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #00E676;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00E676, 0 0 20px #00E676;
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+        }html { scroll-behavior: smooth; }.chart-bar {
+            background: linear-gradient(180deg, #9ca3af 0%, #d1d5db 100%);
+            border-radius: 4px;
+        }
+        .chart-bar.active {
+            background: linear-gradient(180deg, #4b5563 0%, #6b7280 100%);
+        }
+    </style>
+</head>
+<body class="font-body selection:bg-gray-300 selection:text-black min-h-screen">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<div class="fixed top-6 left-0 right-0 z-50 flex justify-center w-full px-4">
+<nav class="glass-nav rounded-full px-8 py-4 flex items-center justify-between gap-12 shadow-float max-w-4xl w-full">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center size-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-300 shadow-clay-sm text-gray-700">
+<span class="material-symbols-outlined !text-lg">bolt</span>
+</div>
+<span class="font-display font-bold text-lg tracking-tight text-gray-700">Faltric</span>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors" href="#">Dashboard</a>
+<a class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors" href="#">Grid Map</a>
+<a class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors" href="#">Analytics</a>
+<a class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors" href="#">Wallet</a>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-200/50">
+<div class="live-dot"></div>
+<span class="text-xs font-semibold text-gray-600 tracking-wide uppercase">Live</span>
+</div>
+<button class="size-10 rounded-full flex items-center justify-center bg-[#eef1f5] shadow-clay hover:shadow-clay-inset transition-all duration-300 text-gray-600">
+<span class="material-symbols-outlined !text-xl">notifications</span>
+</button>
+<button class="md:hidden size-10 rounded-full flex items-center justify-center bg-[#eef1f5] shadow-clay text-gray-600">
+<span class="material-symbols-outlined !text-xl">menu</span>
+</button>
+</div>
+</nav>
+</div>
+<main class="flex-grow pt-32 pb-12 px-6 lg:px-12 max-w-[1600px] mx-auto w-full">
+<div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+<div>
+<h1 class="text-4xl md:text-5xl font-display font-bold text-gray-800 mb-2">Energy Overview</h1>
+<p class="text-gray-500 text-lg">Real-time AI grid management &amp; trading analytics.</p>
+</div>
+<div class="flex gap-4">
+<div class="clay-card px-6 py-3 flex items-center gap-3">
+<span class="material-symbols-outlined text-gray-400">calendar_today</span>
+<span class="text-sm font-medium text-gray-600">Oct 24, 2023</span>
+</div>
+<button class="clay-card px-6 py-3 flex items-center gap-3 hover:shadow-clay-hover transition-all active:shadow-clay-inset text-gray-700">
+<span class="material-symbols-outlined">download</span>
+<span class="text-sm font-bold">Export Report</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<div class="lg:col-span-8 flex flex-col gap-8">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
+<div class="absolute right-4 top-4 p-2 rounded-full bg-[#eef1f5] shadow-clay-sm text-gray-400">
+<span class="material-symbols-outlined">electric_bolt</span>
+</div>
+<div>
+<p class="text-sm font-medium text-gray-500 mb-1">Total Output</p>
+<h3 class="text-3xl font-display font-bold text-gray-800">14.2 <span class="text-lg text-gray-400 font-normal">MWh</span></h3>
+</div>
+<div class="flex items-center gap-2 text-sm text-gray-500">
+<span class="flex items-center text-green-500 bg-green-100 px-1.5 py-0.5 rounded text-xs font-bold">+12%</span>
+<span>vs last hour</span>
+</div>
+</div>
+<div class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden">
+<div class="absolute right-4 top-4 p-2 rounded-full bg-[#eef1f5] shadow-clay-sm text-gray-400">
+<span class="material-symbols-outlined">token</span>
+</div>
+<div>
+<p class="text-sm font-medium text-gray-500 mb-1">Grid Rewards</p>
+<h3 class="text-3xl font-display font-bold text-gray-800">8,450 <span class="text-lg text-gray-400 font-normal">FLT</span></h3>
+</div>
+<div class="flex items-center gap-2 text-sm text-gray-500">
+<span class="flex items-center text-gray-600 bg-gray-200 px-1.5 py-0.5 rounded text-xs font-bold">~ $2.4k</span>
+<span>Pending claim</span>
+</div>
+</div>
+<div class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden">
+<div class="absolute right-4 top-4 p-2 rounded-full bg-[#eef1f5] shadow-clay-sm text-gray-400">
+<span class="material-symbols-outlined">co2</span>
+</div>
+<div>
+<p class="text-sm font-medium text-gray-500 mb-1">Carbon Offset</p>
+<h3 class="text-3xl font-display font-bold text-gray-800">420 <span class="text-lg text-gray-400 font-normal">Tons</span></h3>
+</div>
+<div class="flex items-center gap-2 text-sm text-gray-500">
+<div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+<div class="h-full bg-gray-500 w-[75%]"></div>
+</div>
+<span class="text-xs whitespace-nowrap">75% to Goal</span>
+</div>
+</div>
+</div>
+<div class="clay-card p-8 flex flex-col gap-6">
+<div class="flex justify-between items-center">
+<h3 class="text-xl font-bold text-gray-800">Grid Consumption vs. Production</h3>
+<div class="flex gap-2">
+<button class="px-4 py-1.5 rounded-full text-xs font-bold text-gray-600 shadow-clay-inset">Daily</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors">Weekly</button>
+<button class="px-4 py-1.5 rounded-full text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors">Monthly</button>
+</div>
+</div>
+<div class="h-64 w-full flex items-end justify-between gap-2 px-2 pb-4 border-b border-gray-200">
+<div class="w-full flex items-end justify-between gap-3 h-full">
+<div class="w-full bg-transparent flex flex-col gap-2 h-[40%] justify-end group">
+<div class="w-full bg-gray-300 rounded-t-lg h-full shadow-sm"></div>
+<span class="text-[10px] text-center text-gray-400">00:00</span>
+</div>
+<div class="w-full bg-transparent flex flex-col gap-2 h-[55%] justify-end group">
+<div class="w-full bg-gray-300 rounded-t-lg h-full shadow-sm"></div>
+<span class="text-[10px] text-center text-gray-400">04:00</span>
+</div>
+<div class="w-full bg-transparent flex flex-col gap-2 h-[35%] justify-end group">
+<div class="w-full bg-gray-300 rounded-t-lg h-full shadow-sm"></div>
+<span class="text-[10px] text-center text-gray-400">08:00</span>
+</div>
+<div class="w-full bg-transparent flex flex-col gap-2 h-[70%] justify-end group">
+<div class="w-full bg-gray-400 rounded-t-lg h-full shadow-lg relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">70%</div>
+</div>
+<span class="text-[10px] text-center text-gray-500 font-bold">12:00</span>
+</div>
+<div class="w-full bg-transparent flex flex-col gap-2 h-[85%] justify-end group">
+<div class="w-full bg-gray-800 rounded-t-lg h-full shadow-xl relative">
+<div class="absolute -top-2 right-2 size-2 rounded-full bg-green-400 shadow-glow animate-pulse"></div>
+</div>
+<span class="text-[10px] text-center text-gray-800 font-bold">16:00</span>
+</div>
+<div class="w-full bg-transparent flex flex-col gap-2 h-[60%] justify-end group">
+<div class="w-full bg-gray-300 rounded-t-lg h-full shadow-sm"></div>
+<span class="text-[10px] text-center text-gray-400">20:00</span>
+</div>
+<div class="w-full bg-transparent flex flex-col gap-2 h-[45%] justify-end group">
+<div class="w-full bg-gray-300 rounded-t-lg h-full shadow-sm"></div>
+<span class="text-[10px] text-center text-gray-400">23:59</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-4 flex flex-col gap-8">
+<div class="clay-card p-6 relative overflow-hidden">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-lg font-bold text-gray-800">AI Grid Optimizer</h3>
+<div class="px-2 py-1 rounded bg-gray-200 text-xs font-bold text-gray-600">v2.4.0</div>
+</div>
+<div class="flex flex-col gap-4">
+<div class="clay-card-inset p-4 flex items-center gap-4">
+<div class="size-10 rounded-full bg-gray-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-gray-500">psychology</span>
+</div>
+<div class="flex-1">
+<p class="text-xs text-gray-500 font-bold uppercase">Prediction</p>
+<p class="text-sm font-medium text-gray-800">Surplus expected at 14:00</p>
+</div>
+</div>
+<div class="clay-card-inset p-4 flex items-center gap-4">
+<div class="size-10 rounded-full bg-gray-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-gray-500">tune</span>
+</div>
+<div class="flex-1">
+<p class="text-xs text-gray-500 font-bold uppercase">Action</p>
+<p class="text-sm font-medium text-gray-800">Rerouting to storage nodes</p>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-4 border-t border-gray-200">
+<div class="flex justify-between items-center text-sm">
+<span class="text-gray-500">System Confidence</span>
+<span class="font-bold text-gray-800">98.2%</span>
+</div>
+<div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+<div class="bg-gray-600 h-2 rounded-full" style="width: 98%"></div>
+</div>
+</div>
+</div>
+<div class="clay-card p-8 flex flex-col gap-6 text-center">
+<div class="relative mx-auto size-24 clay-card-inset rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-gray-400">hub</span>
+<div class="absolute inset-0 rounded-full border border-gray-300 opacity-50"></div>
+<div class="absolute top-1 right-1 size-4 bg-green-500 rounded-full shadow-glow border-2 border-white"></div>
+</div>
+<div>
+<h3 class="text-xl font-bold text-gray-800">Node #8392-A</h3>
+<p class="text-gray-500 text-sm mt-1">Connected to Ethereum Mainnet</p>
+</div>
+<button class="w-full clay-card py-3 font-bold text-gray-700 hover:text-black hover:shadow-clay-hover active:shadow-clay-inset transition-all">
+                            Manage Node Settings
+                        </button>
+</div>
+<div class="clay-card p-6 flex-1 min-h-[200px]">
+<h3 class="text-lg font-bold text-gray-800 mb-4">Recent Activity</h3>
+<div class="flex flex-col gap-3">
+<div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-gray-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-gray-600">arrow_outward</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-gray-700">Sold 40kWh</span>
+<span class="text-xs text-gray-400">2 min ago</span>
+</div>
+</div>
+<span class="text-sm font-bold text-gray-800">+ 12 FLT</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-gray-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-gray-600">sync</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-gray-700">Grid Sync</span>
+<span class="text-xs text-gray-400">15 min ago</span>
+</div>
+</div>
+<span class="text-sm font-bold text-gray-800">--</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-gray-200 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-gray-600">arrow_downward</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-gray-700">Bought 12kWh</span>
+<span class="text-xs text-gray-400">1 hr ago</span>
+</div>
+</div>
+<span class="text-sm font-bold text-gray-800">- 4 FLT</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-8 clay-card p-6 relative overflow-hidden">
+<div class="absolute top-6 left-6 z-10 bg-gray-100/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-gray-600 border border-white shadow-sm flex items-center gap-2">
+<span class="size-2 rounded-full bg-green-500 animate-pulse"></span>
+                    Local Grid Status: STABLE
+                </div>
+<div class="h-64 w-full rounded-xl overflow-hidden relative">
+<div class="h-full w-full bg-cover bg-center filter grayscale opacity-60 mix-blend-multiply" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD1l0iI0DDesY_eTGaYeFReFxykwqtxDMcCfPnvzYgnHdKLG8HmTCGEwY2S6Z4AeAbcHd-piLvwO4_niK7ZoTXZp57XZqwYugQf8ZNeclPL8oBHxLSB5DxAoYzCYvUnTtfCYiQf59BZ33Ti-5pVWfRW0r4vl5u-zSOpcwSkQyNQNr318jTNBJ_cAdc03f2yz7LNAqAn7CI8OkAWziUSZhA5p0kmyX6xQzr2ebhv5oFs2m8kedZ0ZgcTAEtwxJ4hXFKH0f9qLS_f2gPU');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-[#eef1f5] to-transparent"></div>
+<div class="absolute top-1/2 left-1/4 -translate-y-1/2">
+<div class="size-16 rounded-full border-4 border-gray-300/50 flex items-center justify-center animate-pulse">
+<div class="size-4 bg-gray-600 rounded-full shadow-lg"></div>
+</div>
+</div>
+<div class="absolute top-1/3 right-1/3">
+<div class="size-24 rounded-full border-2 border-gray-300/30 flex items-center justify-center">
+<div class="size-3 bg-gray-400 rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-auto py-8 text-center text-gray-400 text-sm">
+<p>© 2023 Faltric. Powered by Decentralized AI.</p>
+</footer>
+</div>
+
+</body></html>

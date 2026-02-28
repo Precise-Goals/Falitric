@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Faltric - Decentralized Energy Grid</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        background: "#080808",
+                        surface: "#121212",
+                        "surface-light": "#1E1E1E",
+                        "text-primary": "#F2F2F2",
+                        "text-secondary": "#A1A1AA",
+                        accent: "#FFFFFF",
+                        "accent-dim": "#333333",
+                    },
+                    fontFamily: {
+                        display: ["Space Grotesk", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                    boxShadow: {
+                        'skeuo-inner': 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.1), inset 0 0 0 1px rgba(255,255,255,0.05)',
+                        'skeuo-card': '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                        'glow': '0 0 20px rgba(255, 255, 255, 0.15)',
+                    },
+                    backgroundImage: {
+                        'glass-gradient': 'linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)',
+                        'button-gradient': 'linear-gradient(180deg, rgba(40, 40, 40, 1) 0%, rgba(20, 20, 20, 1) 100%)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #050505;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(255,255,255,0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(255,255,255,0.01) 0%, transparent 30%);
+        }
+        .glass-nav {
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+        }
+        .skeuo-button {
+            background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 
+                0 2px 5px rgba(0,0,0,0.4),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+            transition: all 0.2s ease;
+        }
+        .skeuo-button:hover {
+            background: linear-gradient(180deg, #333333 0%, #222222 100%);
+            box-shadow: 
+                0 4px 12px rgba(255,255,255,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.15);
+            transform: translateY(-1px);
+        }
+        .skeuo-button:active {
+            transform: translateY(1px);
+            background: linear-gradient(180deg, #151515 0%, #202020 100%);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .skeuo-card {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 20px 40px -10px rgba(0,0,0,0.5);
+        }
+        .hero-text-gradient {
+            background: linear-gradient(180deg, #FFFFFF 0%, #A1A1AA 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #080808;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="text-text-primary font-body antialiased min-h-screen flex flex-col">
+<div class="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
+<nav class="glass-nav rounded-2xl px-2 py-2 flex items-center gap-1 sm:gap-2">
+<div class="flex items-center gap-3 px-4 py-2 mr-2">
+<div class="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 shadow-skeuo-inner text-white border border-white/10">
+<span class="material-symbols-outlined !text-lg text-white/90">bolt</span>
+</div>
+<span class="font-display font-bold text-lg tracking-tight text-white">Faltric</span>
+</div>
+<div class="hidden md:flex items-center bg-white/5 rounded-xl px-1 p-1 border border-white/5 shadow-inner">
+<a class="px-5 py-2 text-sm font-medium text-text-secondary hover:text-white rounded-lg transition-colors hover:bg-white/5" href="#">GridMap</a>
+<a class="px-5 py-2 text-sm font-medium text-text-secondary hover:text-white rounded-lg transition-colors hover:bg-white/5" href="#">Exchange</a>
+<a class="px-5 py-2 text-sm font-medium text-text-secondary hover:text-white rounded-lg transition-colors hover:bg-white/5" href="#">Docs</a>
+</div>
+<div class="w-px h-6 bg-white/10 mx-2 hidden md:block"></div>
+<button class="skeuo-button rounded-xl px-5 py-2.5 flex items-center gap-2 group">
+<span class="material-symbols-outlined !text-[18px] text-white/70 group-hover:text-white transition-colors">account_balance_wallet</span>
+<span class="text-sm font-medium text-white/90 group-hover:text-white">Connect</span>
+</button>
+<button class="md:hidden p-2.5 text-text-secondary hover:text-white rounded-xl hover:bg-white/5">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</nav>
+</div>
+<main class="flex-grow flex flex-col relative pt-32">
+<section class="relative flex min-h-[700px] flex-col items-center justify-center px-4 pb-20">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/[0.03] rounded-full blur-[120px] pointer-events-none"></div>
+<div class="relative z-10 mx-auto flex max-w-[960px] flex-col items-center gap-10 text-center">
+<div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-md shadow-lg">
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse"></div>
+<span class="text-xs font-medium tracking-wide text-white/80 uppercase">Live on Testnet v2.0</span>
+</div>
+<div class="flex flex-col gap-2">
+<h1 class="font-display text-5xl font-semibold tracking-tight sm:text-7xl lg:text-8xl hero-text-gradient drop-shadow-2xl">
+                        Decentralized<br/>
+<span class="text-white/40">Energy Grid</span>
+</h1>
+</div>
+<p class="mx-auto max-w-xl text-lg text-text-secondary font-light leading-relaxed">
+                    Orchestrate renewable energy distribution with AI. A peer-to-peer marketplace built for the next generation of sustainable power.
+                </p>
+<div class="relative w-full max-w-3xl aspect-[16/9] mt-8 rounded-2xl overflow-hidden shadow-2xl border border-white/10 group">
+<div class="absolute inset-0 bg-black/60 z-10 flex items-center justify-center transition-all duration-500 group-hover:bg-black/40">
+<div class="size-20 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center cursor-pointer shadow-glow transition-transform duration-300 hover:scale-105">
+<span class="material-symbols-outlined text-white text-4xl ml-1">play_arrow</span>
+</div>
+</div>
+<div class="w-full h-full bg-cover bg-center opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDctv9wL_SZpItJOyw2YEl3R1EEZvciHjLi3b6TzQ8SQ2kabeAcihywadzfBbxeZlPAv-BLWMwrdW-pYkYlbNsdFfk_Bspg8VXU0F6xmVdEQN7qCU3KME7mtf-riquoLWIkntHqxIuLnEK18qDWQ1Omt9mw_wh9S8sqR-1X4rv5E0mq0fBTBP1o7OQzWG-_ksBzj-vh-qISTD_Gzdt9zva0b1BkHTHK5dt5mmYOH-lwIWHIHrl_MM5IEUx-9qiVQxTRXplkWfd77aCM');"></div>
+</div>
+<div class="flex flex-col sm:flex-row gap-4 mt-8 w-full sm:w-auto">
+<button class="skeuo-button h-12 px-8 rounded-xl font-medium text-white flex items-center justify-center gap-2 min-w-[180px]">
+                        Launch Dashboard
+                        <span class="material-symbols-outlined !text-lg">arrow_forward</span>
+</button>
+<button class="h-12 px-8 rounded-xl font-medium text-text-secondary hover:text-white border border-transparent hover:border-white/10 hover:bg-white/5 transition-all flex items-center justify-center gap-2 min-w-[180px]">
+                        Documentation
+                    </button>
+</div>
+</div>
+</section>
+<div class="w-full border-y border-white/5 bg-black/20 backdrop-blur-sm py-6">
+<div class="mx-auto max-w-6xl px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
+<div class="flex flex-col items-center justify-center gap-1">
+<span class="text-2xl font-display font-bold text-white tracking-tight">1,240</span>
+<span class="text-xs uppercase tracking-wider text-text-secondary font-medium">MWh Traded</span>
+</div>
+<div class="flex flex-col items-center justify-center gap-1">
+<span class="text-2xl font-display font-bold text-white tracking-tight">4.5k+</span>
+<span class="text-xs uppercase tracking-wider text-text-secondary font-medium">Active Nodes</span>
+</div>
+<div class="flex flex-col items-center justify-center gap-1">
+<span class="text-2xl font-display font-bold text-white tracking-tight">$240k</span>
+<span class="text-xs uppercase tracking-wider text-text-secondary font-medium">Value Saved</span>
+</div>
+<div class="flex flex-col items-center justify-center gap-1">
+<span class="text-2xl font-display font-bold text-white tracking-tight">500t</span>
+<span class="text-xs uppercase tracking-wider text-text-secondary font-medium">CO₂ Offset</span>
+</div>
+</div>
+</div>
+<section class="px-4 py-24 relative overflow-hidden">
+<div class="mx-auto flex max-w-[1100px] flex-col gap-16 relative z-10">
+<div class="flex flex-col gap-4 text-center">
+<h2 class="font-display text-3xl font-semibold md:text-4xl text-white">
+                        System Architecture
+                    </h2>
+<p class="mx-auto max-w-xl text-text-secondary">
+                        Built on a stack of advanced Web3 protocols and proprietary AI models for maximum efficiency.
+                    </p>
+</div>
+<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+<div class="skeuo-card rounded-2xl p-8 flex flex-col gap-6 group hover:bg-white/[0.08] transition-colors">
+<div class="size-12 rounded-xl bg-gradient-to-b from-white/10 to-transparent border border-white/10 flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-white/80">swap_horiz</span>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="text-lg font-semibold text-white">P2P Trading</h3>
+<p class="text-sm text-text-secondary leading-relaxed">Direct solar power exchange via smart contracts. Eliminate intermediaries and optimize yield generation.</p>
+</div>
+</div>
+<div class="skeuo-card rounded-2xl p-8 flex flex-col gap-6 group hover:bg-white/[0.08] transition-colors">
+<div class="size-12 rounded-xl bg-gradient-to-b from-white/10 to-transparent border border-white/10 flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-white/80">psychology</span>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="text-lg font-semibold text-white">AI Balancing</h3>
+<p class="text-sm text-text-secondary leading-relaxed">Predictive load management algorithms prevent outages and distribute grid stress evenly in real-time.</p>
+</div>
+</div>
+<div class="skeuo-card rounded-2xl p-8 flex flex-col gap-6 group hover:bg-white/[0.08] transition-colors">
+<div class="size-12 rounded-xl bg-gradient-to-b from-white/10 to-transparent border border-white/10 flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-white/80">forest</span>
+</div>
+<div class="flex flex-col gap-2">
+<h3 class="text-lg font-semibold text-white">Carbon NFT</h3>
+<p class="text-sm text-text-secondary leading-relaxed">Immutable on-chain verification of your green impact. Tokenized credits for transparent sustainability.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="px-4 py-24 border-t border-white/5 bg-gradient-to-b from-transparent to-black">
+<div class="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-[#0A0A0A] p-1 shadow-2xl overflow-hidden">
+<div class="rounded-[20px] bg-[#111] border border-white/5 p-8 lg:p-12 flex flex-col lg:flex-row gap-12 items-center relative overflow-hidden">
+<div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
+<div class="flex-1 flex flex-col gap-6 relative z-10 text-center lg:text-left">
+<h2 class="font-display text-3xl font-semibold md:text-4xl text-white tracking-tight">
+                            Initialize Grid Connection
+                        </h2>
+<p class="text-text-secondary text-lg font-light max-w-md mx-auto lg:mx-0">
+                            Join the decentralized energy economy. Connect your wallet to begin participating in grid stabilization.
+                        </p>
+<div class="flex flex-col sm:flex-row gap-4 pt-4 justify-center lg:justify-start">
+<button class="skeuo-button h-14 px-8 rounded-xl font-medium text-white shadow-glow flex items-center justify-center gap-3">
+<img alt="MetaMask" class="w-6 h-6" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDA5MctI7DyozqyUdbAF_9jwnPEW6329Gbbi_0FMVUFlIWXwbgDvOtKywH2l9AOySBDmV8p5PQkxBa3ohAF94n2aGRP9gSdSRyyrSY5rjD014By2qMigfqRj0Z9N9MOh7-jiwgCbUwBGlOsFZ4uUg2Msv-fFLB9qI_j0LIJ1qFdXybB8YN8crGjHOzqFwunmusLSP3tXbr4qKEP0nhSUlQZ5ra1CaMpT3YgiUwV4KvyU63Gs17yBwKjK18zPWBvbFs1u2h2CHbR1zu5"/>
+<span>Connect MetaMask</span>
+</button>
+</div>
+</div>
+<div class="flex-1 w-full max-w-[500px] relative z-10">
+<div class="relative aspect-[4/3] w-full rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-[#050505]">
+<div class="absolute top-4 right-4 z-20 flex gap-2">
+<div class="px-2 py-1 rounded bg-black/60 backdrop-blur text-[10px] font-mono text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+<div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> ONLINE
+                                </div>
+</div>
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center opacity-60 grayscale mix-blend-screen" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD1l0iI0DDesY_eTGaYeFReFxykwqtxDMcCfPnvzYgnHdKLG8HmTCGEwY2S6Z4AeAbcHd-piLvwO4_niK7ZoTXZp57XZqwYugQf8ZNeclPL8oBHxLSB5DxAoYzCYvUnTtfCYiQf59BZ33Ti-5pVWfRW0r4vl5u-zSOpcwSkQyNQNr318jTNBJ_cAdc03f2yz7LNAqAn7CI8OkAWziUSZhA5p0kmyX6xQzr2ebhv5oFs2m8kedZ0ZgcTAEtwxJ4hXFKH0f9qLS_f2gPU');"></div>
+</div>
+<div class="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent h-full w-full pointer-events-none animate-[scan_3s_ease-in-out_infinite] translate-y-[-100%]"></div>
+<div class="absolute inset-0 bg-radial-gradient from-transparent to-black/80 pointer-events-none"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="border-t border-white/5 bg-[#050505] px-6 py-12">
+<div class="mx-auto flex max-w-[1000px] flex-col gap-10">
+<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
+<div class="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white">bolt</span>
+<span class="text-sm font-semibold tracking-wide text-white uppercase">Faltric</span>
+</div>
+<div class="flex flex-wrap items-center justify-center gap-8">
+<a class="text-xs font-medium text-text-secondary hover:text-white transition-colors uppercase tracking-wider" href="#">Privacy</a>
+<a class="text-xs font-medium text-text-secondary hover:text-white transition-colors uppercase tracking-wider" href="#">Terms</a>
+<a class="text-xs font-medium text-text-secondary hover:text-white transition-colors uppercase tracking-wider" href="#">Contract</a>
+</div>
+<div class="flex items-center gap-4">
+<a class="text-text-secondary hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined !text-xl">alternate_email</span>
+</a>
+<a class="text-text-secondary hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined !text-xl">forum</span>
+</a>
+<a class="text-text-secondary hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined !text-xl">code</span>
+</a>
+</div>
+</div>
+<div class="border-t border-white/5 pt-8 text-center">
+<p class="font-body text-xs text-text-secondary/50">© 2023 Faltric. All systems operational.</p>
+</div>
+</div>
+</footer>
+
+</body></html>

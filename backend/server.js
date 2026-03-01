@@ -20,7 +20,7 @@ dotenv.config({ path: "../.env" }); // Load Vite root .env as fallback
 
 const app = express();
 
-const allowedOrigins = ["https://flactric.vercel.app", "http://localhost:5173","https://falitric.vercel.app/"];
+const allowedOrigins = ["https://flactric.vercel.app", "http://localhost:5173","https://falitric.vercel.app"];
 
 app.use(
   cors({

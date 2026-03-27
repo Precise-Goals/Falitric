@@ -324,6 +324,17 @@ app.get(/^\/api\/stream\/(.*)/, (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
+  // Ensure CORS headers are explicitly set for the stream before flushing
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+
+  // Force flush headers to instruct Vercel/proxies to begin streaming immediately
+  // This prevents Vercel from buffering the request until timeout, which strips headers.
+  res.flushHeaders();
+
   // Send an initial connected message
   res.write(": connected\n\n");
 

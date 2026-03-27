@@ -12,7 +12,7 @@ export default function Connect({ user }) {
       id: "welcome",
       sender: "system",
       senderName: "Faltric AI Oracle",
-      text: "INITIALIZING_NEURAL_LINK... ONLINE. How can I assist with your energy assets today?",
+      text: "Falink, How can I assist with your energy assets today?",
       timestamp: Date.now(),
       role: "admin",
     },

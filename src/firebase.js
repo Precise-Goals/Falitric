@@ -70,27 +70,43 @@ export const remove = async (pathRef) => {
 };
 
 export const onValue = (pathRef, callback) => {
-  const eventSource = new EventSource(`${API_BASE}/stream/${pathRef}`);
+  let isCancelled = false;
+  let timeoutId = null;
 
-  eventSource.onmessage = (event) => {
+  const poll = async () => {
+    if (isCancelled) return;
     try {
-      const data = JSON.parse(event.data);
-      callback({
-        exists: () => data !== null && data !== undefined,
-        val: () => data,
-      });
+      const url = new URL(`${API_BASE}/db/${pathRef}`);
+      // Add a timestamp to bypass browser caching completely
+      url.searchParams.append("_t", Date.now());
+      
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (!isCancelled) {
+          callback({
+            exists: () => data !== null && data !== undefined,
+            val: () => data,
+          });
+        }
+      } else {
+        console.error("Polling error: Server returned", res.status);
+      }
     } catch (e) {
-      console.error("Error parsing SSE data", e);
+      console.error("Polling request failed", e);
+    }
+
+    if (!isCancelled) {
+      timeoutId = setTimeout(poll, 3000); // Poll every 3 seconds
     }
   };
 
-  eventSource.onerror = (error) => {
-    console.error("SSE Error:", error);
-  };
+  poll();
 
   // Return unsubscribe function
   return () => {
-    eventSource.close();
+    isCancelled = true;
+    if (timeoutId) clearTimeout(timeoutId);
   };
 };
 

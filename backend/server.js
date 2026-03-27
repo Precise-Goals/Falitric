@@ -20,7 +20,13 @@ dotenv.config({ path: "../.env" }); // Load Vite root .env as fallback
 
 const app = express();
 
-const allowedOrigins = ["https://faltric.vercel.app", "http://localhost:5173","https://falitric.vercel.app"];
+const allowedOrigins = [
+  "https://faltric.vercel.app",
+  "http://localhost:5173",
+  "https://falitric.vercel.app",
+  "https://faltric-hry1v3r01-sarthaks-projects-e711f64f.vercel.app",
+  "https://falitric.vercel.app/",
+];
 
 app.use(
   cors({
@@ -237,12 +243,15 @@ app.post("/api/ai/tts", async (req, res) => {
       console.error("[AI_TTS_PROXY] Missing VITE_SARVAM_API_KEY in .env");
       return res.status(500).json({ error: "Sarvam API key missing" });
     }
-    
+
     if (!text || typeof text !== "string") {
       return res.status(400).json({ error: "Text is required" });
     }
 
-    console.log("[AI_TTS_PROXY] Requesting Sarvam TTS for text length:", text.length);
+    console.log(
+      "[AI_TTS_PROXY] Requesting Sarvam TTS for text length:",
+      text.length,
+    );
 
     // Chunk text by words into 450 character maximums to pass API limits safely
     const chunks = [];
@@ -282,7 +291,11 @@ app.post("/api/ai/tts", async (req, res) => {
 
       if (!sarvamRes.ok) {
         const errText = await sarvamRes.text();
-        console.error("[AI_TTS_PROXY] Sarvam TTS Rejection in batch:", sarvamRes.status, errText);
+        console.error(
+          "[AI_TTS_PROXY] Sarvam TTS Rejection in batch:",
+          sarvamRes.status,
+          errText,
+        );
         throw new Error(errText);
       }
 
@@ -292,7 +305,10 @@ app.post("/api/ai/tts", async (req, res) => {
       }
     }
 
-    console.log("[AI_TTS_PROXY] Sarvam TTS Response completed. Audio chunks:", allAudios.length);
+    console.log(
+      "[AI_TTS_PROXY] Sarvam TTS Response completed. Audio chunks:",
+      allAudios.length,
+    );
     res.json({ audios: allAudios });
   } catch (err) {
     console.error("[AI_TTS_PROXY] Critical Proxy failure:", err);

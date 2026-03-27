@@ -4,7 +4,7 @@
 export const API_BASE =
   import.meta.env.DEV
     ? "http://localhost:3000/api"
-    : import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+    : import.meta.env.VITE_API_BASE_URL || "/api";
 
 export const ref = (database, path) => path;
 

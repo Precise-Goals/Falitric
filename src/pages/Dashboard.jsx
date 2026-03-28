@@ -467,12 +467,40 @@ const Footer = memo(() => (
   </footer>
 ));
 
+const VideoSection = memo(() => (
+  <div
+    className="vd"
+    style={{
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      background: "black",
+    }}
+  >
+    <video
+      src="/video.mp4"
+      autoPlay
+      loop
+      controls
+      style={{
+        filter: "brightness(0.98) contrast(1.125)",
+        margin: "5% 15%",
+        width:"60%",
+        borderRadius: "5rem",
+        background: "black",
+      }}
+    />
+  </div>
+));
+
 export default function Dashboard() {
   return (
     <div className="bg-white text-[#111811] font-display antialiased overflow-x-hidden selection:bg-black selection:text-white">
       <main className="flex-grow">
         <Hero />
         <ProblemSection />
+        <VideoSection />
         <SolutionSection />
         <FeatureShowcase />
         <Ticker />

@@ -108,7 +108,7 @@ export default function AboutUs() {
         </div>
       </section>
 
-      <section className="py-20 px-6 bg-white dark:bg-black border-b-2 border-[#111811] dark:border-gray-700">
+      {/* <section className="py-20 px-6 bg-white dark:bg-black border-b-2 border-[#111811] dark:border-gray-700">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
             <div>
@@ -190,7 +190,7 @@ export default function AboutUs() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="py-20 px-6 bg-[#f6f8f6] dark:bg-[#141e15] border-b-2 border-[#111811] dark:border-gray-700 bg-grid-pattern">
         <div className="max-w-6xl mx-auto">

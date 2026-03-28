@@ -281,9 +281,9 @@ app.post("/api/ai/tts", async (req, res) => {
         body: JSON.stringify({
           inputs: batch,
           target_language_code: "en-IN",
-          speaker: "ritu",
-          pace: 1.0,
-          speech_sample_rate: 8000,
+          speaker: "shubh",
+          pace: 0.98,
+          speech_sample_rate: 48000,
           enable_preprocessing: true,
           model: "bulbul:v3",
         }),
